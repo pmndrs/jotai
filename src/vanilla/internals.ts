@@ -1029,15 +1029,12 @@ function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
 function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
   const store = {
     get(atom) {
-      const BB_storeGet = buildingBlocks[21]
       return BB_storeGet(buildingBlocks, atom)
     },
     set(atom, ...args) {
-      const BB_storeSet = buildingBlocks[22]
       return BB_storeSet(buildingBlocks, atom, args)
     },
     sub(atom, listener) {
-      const BB_storeSub = buildingBlocks[23]
       return BB_storeSub(buildingBlocks, atom, listener)
     },
   } as Store
@@ -1071,7 +1068,7 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
       BUILDING_BLOCK_storeGet,
       BUILDING_BLOCK_storeSet,
       BUILDING_BLOCK_storeSub,
-      undefined,
+      undefined, // enhanceBuildingBlocks
       // abortable promise support
       new WeakMap(), // abortHandlersMap
       BUILDING_BLOCK_registerAbortHandler,
@@ -1081,6 +1078,9 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))
+  const BB_storeGet = buildingBlocks[21]
+  const BB_storeSet = buildingBlocks[22]
+  const BB_storeSub = buildingBlocks[23]
   return store
 }
 
