@@ -7,7 +7,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: /^jotai$/, replacement: resolve('./src/index.ts') },
-      { find: /^jotai(.*)$/, replacement: resolve('./src/$1.ts') },
+      { find: /^jotai\/(.*)$/, replacement: resolve('./src/$1.ts') },
     ],
   },
   plugins: [
