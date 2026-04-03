@@ -83,15 +83,21 @@ type ChangedAtoms = SetLike<AnyAtom>
 type Callbacks = SetLike<() => void>
 
 type AtomRead = <Value>(
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: Atom<Value>,
   ...params: Parameters<Atom<Value>['read']>
 ) => Value
 type AtomWrite = <Value, Args extends unknown[], Result>(
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: WritableAtom<Value, Args, Result>,
   ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
 ) => Result
-type AtomOnInit = <Value>(atom: Atom<Value>) => void
+type AtomOnInit = <Value>(
+  buildingBlocks: Readonly<BuildingBlocks>,
+  atom: Atom<Value>,
+) => void
 type AtomOnMount = <Value, Args extends unknown[], Result>(
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: WritableAtom<Value, Args, Result>,
   setAtom: (...args: Args) => Result,
 ) => OnUnmount | void
@@ -380,6 +386,36 @@ function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
 // Main functions
 //
 
+const BUILDING_BLOCK_atomRead: AtomRead = (_buildingBlocks, atom, ...params) =>
+  atom.read(...params)
+const BUILDING_BLOCK_atomWrite: AtomWrite = (
+  _buildingBlocks,
+  atom,
+  ...params
+) => atom.write(...params)
+const BUILDING_BLOCK_atomOnInit: AtomOnInit = (buildingBlocks, atom) => {
+  const storeGet = buildingBlocks[21]
+  const storeSet = buildingBlocks[22]
+  const storeSub = buildingBlocks[23]
+  const store: Store = {
+    get(atom) {
+      return storeGet(buildingBlocks, atom)
+    },
+    set(atom, ...args) {
+      return storeSet(buildingBlocks, atom, args)
+    },
+    sub(atom, listener) {
+      return storeSub(buildingBlocks, atom, listener)
+    },
+  }
+  return atom.INTERNAL_onInit?.(store)
+}
+const BUILDING_BLOCK_atomOnMount: AtomOnMount = (
+  _buildingBlocks,
+  atom,
+  setAtom,
+) => atom.onMount?.(setAtom)
+
 const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
   buildingBlocks,
   atom,
@@ -395,7 +431,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
-    atomOnInit?.(atom)
+    atomOnInit?.(buildingBlocks, atom)
   }
   return atomState as never
 }
@@ -657,7 +693,12 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
     if (import.meta.env?.MODE !== 'production') {
       storeMutationSet.delete(buildingBlocks)
     }
-    const valueOrPromise = atomRead(atom, getter, options as never)
+    const valueOrPromise = atomRead(
+      buildingBlocks,
+      atom,
+      getter,
+      options as never,
+    )
     if (
       import.meta.env?.MODE !== 'production' &&
       storeMutationSet.has(buildingBlocks)
@@ -775,7 +816,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
     }
   }
   try {
-    return atomWrite(atom, getter, setter, ...args)
+    return atomWrite(buildingBlocks, atom, getter, setter, ...args)
   } finally {
     isSync = false
   }
@@ -860,7 +901,7 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (buildingBlocks, atom) => {
           }
         }
         try {
-          const onUnmount = atomOnMount(atom, setAtom)
+          const onUnmount = atomOnMount(buildingBlocks, atom, setAtom)
           if (onUnmount) {
             mounted!.u = () => {
               isSync = true
@@ -1022,7 +1063,7 @@ function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
 }
 
 function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
-  const store = {
+  const store: Store = {
     get(atom) {
       return storeGet(buildingBlocks, atom)
     },
@@ -1032,7 +1073,7 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
     sub(atom, listener) {
       return storeSub(buildingBlocks, atom, listener)
     },
-  } as Store
+  }
 
   const buildingBlocks = (
     [
@@ -1045,10 +1086,10 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
       new Set(), // unmountCallbacks
       {}, // storeHooks
       // atom interceptors
-      (atom, ...params) => atom.read(...params),
-      (atom, ...params) => atom.write(...params),
-      (atom) => atom.INTERNAL_onInit?.(store),
-      (atom, setAtom) => atom.onMount?.(setAtom),
+      BUILDING_BLOCK_atomRead,
+      BUILDING_BLOCK_atomWrite,
+      BUILDING_BLOCK_atomOnInit,
+      BUILDING_BLOCK_atomOnMount,
       // building-block functions
       BUILDING_BLOCK_ensureAtomState,
       BUILDING_BLOCK_flushCallbacks,
