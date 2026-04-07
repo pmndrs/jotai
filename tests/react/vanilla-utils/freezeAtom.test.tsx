@@ -81,7 +81,7 @@ it('freezeAtom handles primitive correctly', () => {
 })
 
 describe('freezeAtomCreator', () => {
-  let savedConsoleWarn: any
+  let savedConsoleWarn: typeof console.warn
   beforeEach(() => {
     savedConsoleWarn = console.warn
     console.warn = vi.fn()

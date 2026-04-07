@@ -4,7 +4,7 @@ import { RESET, atomWithReset } from 'jotai/vanilla/utils'
 
 describe('atomWithReset', () => {
   let initialValue: number
-  let testAtom: any
+  let testAtom: ReturnType<typeof atomWithReset<number>>
 
   beforeEach(() => {
     vi.clearAllMocks()

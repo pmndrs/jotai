@@ -34,9 +34,9 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
     undefined,
     (_store, atom, get, set, ...args) => {
       if (inRestoreAtom) {
-        return set(atom, ...(args as any))
+        return set(atom, ...args)
       }
-      return atom.write(get, set, ...(args as any))
+      return atom.write(get, set, ...args)
     },
   )
   const debugMountedAtoms = new Set<Atom<unknown>>()
@@ -44,13 +44,13 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
     debugMountedAtoms.add(atom)
     const atomState = atomStateMap.get(atom)
     // For DevStoreRev4 compatibility
-    ;(atomState as any).m = mountedAtoms.get(atom)
+    ;(atomState).m = mountedAtoms.get(atom)
   })
   storeHooks.u.add(undefined, (atom) => {
     debugMountedAtoms.delete(atom)
     const atomState = atomStateMap.get(atom)
     // For DevStoreRev4 compatibility
-    delete (atomState as any).m
+    delete (atomState).m
   })
   const devStore: DevStore = {
     // store dev methods (these are tentative and subject to change without notice)

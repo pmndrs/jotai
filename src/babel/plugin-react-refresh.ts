@@ -4,6 +4,7 @@ import _templateBuilder from '@babel/template'
 import { isAtom } from './utils.ts'
 import type { PluginOptions } from './utils.ts'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const templateBuilder = (_templateBuilder as any).default || _templateBuilder
 
 /** @deprecated Use `jotai-babel/plugin-react-refresh` instead. */

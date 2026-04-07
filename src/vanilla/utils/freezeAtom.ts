@@ -1,6 +1,6 @@
 import type { Atom, WritableAtom } from '../../vanilla.ts'
 
-const frozenAtoms = new WeakSet<Atom<any>>()
+const frozenAtoms = new WeakSet<Atom<unknown>>()
 
 const deepFreeze = <T>(value: T): T => {
   if (typeof value !== 'object' || value === null) {

@@ -5,7 +5,7 @@ type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0] & {
   dangerouslyForceHydrate?: boolean
 }
-type AnyWritableAtom = WritableAtom<any, any[], any>
+type AnyWritableAtom = WritableAtom<unknown, unknown[], unknown>
 
 type InferAtomTuples<T> = {
   [K in keyof T]: T[K] extends readonly [infer A, ...infer Rest]

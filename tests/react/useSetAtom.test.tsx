@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+import type { WritableAtom } from 'jotai/vanilla'
 import { useCommitCount } from '../test-utils'
 
 it('useSetAtom does not trigger rerender in component', async () => {
@@ -110,7 +111,9 @@ it('[DEV-ONLY] useSetAtom throws when called with a read-only atom', () => {
   const readOnlyAtom = atom((get) => get(countAtom))
 
   function TestComponent() {
-    const setAtom = useSetAtom(readOnlyAtom as any)
+    const setAtom = useSetAtom(
+      readOnlyAtom as WritableAtom<number, [number], void>,
+    )
 
     useEffect(() => {
       expect(() => setAtom(1)).toThrow('not writable atom')
