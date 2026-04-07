@@ -15,7 +15,6 @@
     "isolatedDeclarations": true,
     "types": ["@testing-library/jest-dom"],
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
       "jotai": ["./src/index.ts"],
       "jotai/*": ["./src/*.ts"]
