@@ -7,13 +7,17 @@ type AnyValue = unknown
 type AnyError = unknown
 type AnyAtom = Atom<AnyValue>
 type AnyWritableAtom = WritableAtom<AnyValue, unknown[], unknown>
+type WritableAtomWithOnMount<
+  Value,
+  Args extends unknown[],
+  Result,
+> = WritableAtom<Value, Args, Result> & {
+  onMount: NonNullable<WritableAtom<Value, Args, Result>['onMount']>
+}
 type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 type EpochNumber = number
-type WithOnMount<T extends WritableAtom<unknown, any[], unknown>> = T & {
-  onMount: NonNullable<T['onMount']>
-}
 
 /**
  * Mutable atom state,
@@ -98,7 +102,7 @@ type AtomWrite = <Value, Args extends unknown[], Result>(
 type AtomOnInit = <Value>(store: Store, atom: Atom<Value>) => void
 type AtomOnMount = <Value, Args extends unknown[], Result>(
   store: Store,
-  atom: WithOnMount<WritableAtom<Value, Args, Result>>,
+  atom: WritableAtomWithOnMount<Value, Args, Result>,
   setAtom: (...args: Args) => Result,
 ) => OnUnmount | void
 
@@ -241,7 +245,7 @@ function isActuallyWritableAtom(atom: AnyAtom): atom is AnyWritableAtom {
 
 function hasOnMount<Value, Args extends unknown[], Result>(
   atom: WritableAtom<Value, Args, Result>,
-): atom is WithOnMount<WritableAtom<Value, Args, Result>> {
+): atom is WritableAtomWithOnMount<Value, Args, Result> {
   return !!atom.onMount
 }
 
