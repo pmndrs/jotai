@@ -578,12 +578,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   // Compute a new state for this atom.
   let isSync = true
   const prevDeps = new Set<AnyAtom>(atomState.d.keys())
-  const nextDeps = new Map<AnyAtom, EpochNumber>()
   const pruneDependencies = () => {
     for (const a of prevDeps) {
-      if (!nextDeps.has(a)) {
-        atomState.d.delete(a)
-      }
+      atomState.d.delete(a)
     }
   }
   const mountDependenciesIfAsync = () => {
@@ -615,7 +612,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     try {
       return returnAtomValue(aState)
     } finally {
-      nextDeps.set(a, aState.n)
+      prevDeps.delete(a)
       atomState.d.set(a, aState.n)
       if (isPromiseLike(atomState.v)) {
         addPendingPromiseToDependency(atom, atomState.v, aState)
