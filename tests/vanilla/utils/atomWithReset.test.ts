@@ -4,6 +4,7 @@ import { RESET, atomWithReset } from 'jotai/vanilla/utils'
 
 describe('atomWithReset', () => {
   let initialValue: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let testAtom: any
 
   beforeEach(() => {

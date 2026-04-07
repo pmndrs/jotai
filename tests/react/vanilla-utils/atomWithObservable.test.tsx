@@ -1,3 +1,6 @@
+// FIXME
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'

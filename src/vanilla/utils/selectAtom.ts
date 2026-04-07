@@ -1,17 +1,17 @@
 import { atom } from '../../vanilla.ts'
 import type { Atom } from '../../vanilla.ts'
 
-const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
+const getCached = <T>(c: () => T, m: WeakMap<object, unknown>, k: object): T =>
   (m.has(k) ? m : m.set(k, c())).get(k) as T
-const cache1 = new WeakMap()
+const cache1 = new WeakMap<object, unknown>()
 const memo3 = <T>(
   create: () => T,
   dep1: object,
   dep2: object,
   dep3: object,
 ): T => {
-  const cache2 = getCached(() => new WeakMap(), cache1, dep1)
-  const cache3 = getCached(() => new WeakMap(), cache2, dep2)
+  const cache2 = getCached(() => new WeakMap<object, unknown>(), cache1, dep1)
+  const cache3 = getCached(() => new WeakMap<object, unknown>(), cache2, dep2)
   return getCached(create, cache3, dep3)
 }
 

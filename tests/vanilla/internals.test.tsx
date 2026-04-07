@@ -103,6 +103,8 @@ describe('internals', () => {
     const deps = Array.from({ length: SIZE }, () => atom(0))
     const derivedAtom = atom((get) => deps.map(get))
     const atomRead = vi.fn()
+    // FIXME
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const wrapRead = <A extends { read: (...args: any[]) => any }>(a: A) => {
       const { read } = a
       a.read = ((...args: Parameters<A['read']>): ReturnType<A['read']> => {
@@ -144,6 +146,8 @@ describe('internals', () => {
     const derivedAtom1 = atom((get) => deps1.map(get))
     const derivedAtom2 = atom((get) => deps2.map(get))
     const atomRead = vi.fn()
+    // FIXME
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const wrapRead = <A extends { read: (...args: any[]) => any }>(a: A) => {
       const { read } = a
       a.read = ((...args: Parameters<A['read']>): ReturnType<A['read']> => {

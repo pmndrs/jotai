@@ -5,6 +5,7 @@ type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0] & {
   dangerouslyForceHydrate?: boolean
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyWritableAtom = WritableAtom<any, any[], any>
 
 type InferAtomTuples<T> = {

@@ -2,7 +2,7 @@ import { atom } from '../../vanilla.ts'
 import type { Atom, Getter, WritableAtom } from '../../vanilla.ts'
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
-  typeof (x as any)?.then === 'function'
+  typeof (x as PromiseLike<unknown>)?.then === 'function'
 
 type Timeout = ReturnType<typeof setTimeout>
 type AnyError = unknown

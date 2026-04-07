@@ -9,7 +9,7 @@ import {
 import type { INTERNAL_Store } from 'jotai/vanilla/internals'
 import { sleep } from '../test-utils'
 
-let savedConsoleWarn: any
+let savedConsoleWarn: typeof console.warn
 
 beforeEach(() => {
   vi.useFakeTimers()

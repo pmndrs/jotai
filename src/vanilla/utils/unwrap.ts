@@ -1,16 +1,16 @@
 import { atom } from '../../vanilla.ts'
 import type { Atom, WritableAtom } from '../../vanilla.ts'
 
-const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
+const getCached = <T>(c: () => T, m: WeakMap<object, unknown>, k: object): T =>
   (m.has(k) ? m : m.set(k, c())).get(k) as T
-const cache1 = new WeakMap()
+const cache1 = new WeakMap<object, unknown>()
 const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
-  const cache2 = getCached(() => new WeakMap(), cache1, dep1)
+  const cache2 = getCached(() => new WeakMap<object, unknown>(), cache1, dep1)
   return getCached(create, cache2, dep2)
 }
 
 const isPromiseLike = (p: unknown): p is PromiseLike<unknown> =>
-  typeof (p as any)?.then === 'function'
+  typeof (p as PromiseLike<unknown>)?.then === 'function'
 
 const defaultFallback = () => undefined
 

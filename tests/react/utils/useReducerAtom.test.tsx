@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useReducerAtom } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
 
-let savedConsoleWarn: any
+let savedConsoleWarn: typeof console.warn
 
 beforeEach(() => {
   savedConsoleWarn = console.warn
