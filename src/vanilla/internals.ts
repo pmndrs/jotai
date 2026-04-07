@@ -407,6 +407,14 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
   const unmountCallbacks = buildingBlocks[5]
   const storeHooks = buildingBlocks[6]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
+  if (
+    !storeHooks.f &&
+    !changedAtoms.size &&
+    !mountCallbacks.size &&
+    !unmountCallbacks.size
+  ) {
+    return
+  }
   const errors: unknown[] = []
   const call = (fn: () => void) => {
     try {
@@ -420,14 +428,26 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
       call(storeHooks.f)
     }
     const callbacks = new Set<() => void>()
-    const add = callbacks.add.bind(callbacks)
-    changedAtoms.forEach((atom) => mountedMap.get(atom)?.l.forEach(add))
+    for (const atom of changedAtoms) {
+      const listeners = mountedMap.get(atom)?.l
+      if (listeners) {
+        for (const listener of listeners) {
+          callbacks.add(listener)
+        }
+      }
+    }
     changedAtoms.clear()
-    unmountCallbacks.forEach(add)
+    for (const fn of unmountCallbacks) {
+      callbacks.add(fn)
+    }
     unmountCallbacks.clear()
-    mountCallbacks.forEach(add)
+    for (const fn of mountCallbacks) {
+      callbacks.add(fn)
+    }
     mountCallbacks.clear()
-    callbacks.forEach(call)
+    for (const fn of callbacks) {
+      call(fn)
+    }
     if (changedAtoms.size) {
       recomputeInvalidatedAtoms(store)
     }
