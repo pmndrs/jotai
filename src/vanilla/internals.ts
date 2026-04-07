@@ -776,15 +776,15 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
 const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
+  const changedAtoms = buildingBlocks[3]
+  const storeHooks = buildingBlocks[6]
   const ensureAtomState = buildingBlocks[11]
+  const invalidateDependents = buildingBlocks[15]
+  const mountAtom = buildingBlocks[18]
+  const unmountAtom = buildingBlocks[19]
   const atomState = ensureAtomState(store, atom)
   const mounted = mountedMap.get(atom)
   if (mounted && atomState.d.size > 0) {
-    const changedAtoms = buildingBlocks[3]
-    const storeHooks = buildingBlocks[6]
-    const invalidateDependents = buildingBlocks[15]
-    const mountAtom = buildingBlocks[18]
-    const unmountAtom = buildingBlocks[19]
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(store, a)
