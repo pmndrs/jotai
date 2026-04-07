@@ -24,8 +24,13 @@ export function getDefaultStore(): Store {
   if (!defaultStore) {
     defaultStore = createStore()
     if (import.meta.env?.MODE !== 'production') {
-      ;(globalThis as any).__JOTAI_DEFAULT_STORE__ ||= defaultStore
-      if ((globalThis as any).__JOTAI_DEFAULT_STORE__ !== defaultStore) {
+      ;(
+        globalThis as { __JOTAI_DEFAULT_STORE__?: unknown }
+      ).__JOTAI_DEFAULT_STORE__ ||= defaultStore
+      if (
+        (globalThis as { __JOTAI_DEFAULT_STORE__?: unknown })
+          .__JOTAI_DEFAULT_STORE__ !== defaultStore
+      ) {
         console.warn(
           'Detected multiple Jotai instances. It may cause unexpected behavior with the default store. https://github.com/pmndrs/jotai/discussions/2044',
         )

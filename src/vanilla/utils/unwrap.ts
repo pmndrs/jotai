@@ -10,7 +10,7 @@ const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
 }
 
 const isPromiseLike = (p: unknown): p is PromiseLike<unknown> =>
-  typeof (p as any)?.then === 'function'
+  typeof (p as PromiseLike<unknown>)?.then === 'function'
 
 const defaultFallback = () => undefined
 
