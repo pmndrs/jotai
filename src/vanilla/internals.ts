@@ -7,11 +7,10 @@ type AnyValue = unknown
 type AnyError = unknown
 type AnyAtom = Atom<AnyValue>
 type AnyWritableAtom = WritableAtom<AnyValue, unknown[], unknown>
-type WritableAtomWithOnMount<
-  Value,
-  Args extends unknown[],
-  Result,
-> = WritableAtom<Value, Args, Result> & {
+type WritableAtomWithOnMount<Value, Args extends unknown[], Result> = Omit<
+  WritableAtom<Value, Args, Result>,
+  'onMount'
+> & {
   onMount: NonNullable<WritableAtom<Value, Args, Result>['onMount']>
 }
 type OnUnmount = () => void
