@@ -211,7 +211,9 @@ describe('internals', () => {
     const unsub = store.sub(leafAtom, () => {})
     const buildingBlocks = INTERNAL_getBuildingBlocks(store)
     const invalidateDependents = buildingBlocks[15]
-    expect(() => invalidateDependents(buildingBlocks, baseAtom)).not.toThrow()
+    expect(() =>
+      invalidateDependents(buildingBlocks, store, baseAtom),
+    ).not.toThrow()
     unsub()
   })
 })
