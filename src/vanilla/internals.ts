@@ -164,9 +164,9 @@ type StoreSub = (
   listener: () => void,
 ) => () => void
 type EnhanceBuildingBlocks = (
-  buildingBlocks: Readonly<Readonly<BuildingBlocks>>,
+  buildingBlocks: Readonly<BuildingBlocks>,
   store: Store,
-) => Readonly<Readonly<BuildingBlocks>>
+) => Readonly<BuildingBlocks>
 type AbortHandlersMap = WeakMapLike<PromiseLike<unknown>, Set<() => void>>
 type RegisterAbortHandler = <T>(
   buildingBlocks: Readonly<BuildingBlocks>,
