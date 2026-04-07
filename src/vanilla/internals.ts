@@ -101,6 +101,7 @@ type AtomOnMount = <Value, Args extends unknown[], Result>(
   atom: WithRequired<WritableAtom<Value, Args, Result>, 'onMount'>,
   setAtom: (...args: Args) => Result,
 ) => OnUnmount | void
+
 type EnsureAtomState = <Value>(
   store: Store,
   atom: Atom<Value>,
