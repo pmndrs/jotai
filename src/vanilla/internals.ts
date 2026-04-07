@@ -823,7 +823,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
   const unmountAtom = buildingBlocks[19]
   const atomState = ensureAtomState(store, atom)
   const mounted = mountedMap.get(atom)
-  if (mounted) {
+  if (mounted && atomState.d.size > 0) {
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(store, a)
