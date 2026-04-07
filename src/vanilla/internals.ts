@@ -441,9 +441,9 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   store,
 ) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
-  const changedAtoms = buildingBlocks[3]
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
+  const changedAtoms = buildingBlocks[3]
   const ensureAtomState = buildingBlocks[11]
   const readAtomState = buildingBlocks[14]
   const mountDependencies = buildingBlocks[17]
