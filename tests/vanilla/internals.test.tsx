@@ -12,7 +12,7 @@ import {
   INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
-const buildingBlockLength = 30
+const buildingBlockLength = 29
 
 describe('internals', () => {
   it('should not return a sparse building blocks array', () => {
@@ -65,25 +65,18 @@ describe('internals', () => {
       internal: vi.fn(),
       external: vi.fn(),
     }
-    const bb0 = [
-      ...INTERNAL_getBuildingBlocks(INTERNAL_buildStore()),
-    ] as INTERNAL_BuildingBlocks
-    const readAtomState = bb0[14]
-    bb0[14] = function readAtomState1(...args) {
+    const bb0 = [] as Partial<INTERNAL_BuildingBlocks>
+    bb0[21] = function storeGet1() {
       didRun.internal()
-      return readAtomState(...args)
-    } as INTERNAL_BuildingBlocks[14]
+    } as INTERNAL_BuildingBlocks[21]
     let bbInternal: Readonly<INTERNAL_BuildingBlocks> | undefined
-    function wrappedReadAtomState(
-      ...args: Parameters<INTERNAL_BuildingBlocks[14]>
-    ) {
+    function storeGet() {
       didRun.external()
-      return readAtomState(...args)
     }
     bb0[24] = (bbi) => {
       bbInternal = bbi
       const bb1 = [...bbi] as INTERNAL_BuildingBlocks
-      bb1[14] = wrappedReadAtomState as INTERNAL_BuildingBlocks[14]
+      bb1[21] = storeGet as INTERNAL_BuildingBlocks[21]
       return bb1
     }
     const store1 = INTERNAL_buildStore(...bb0)
@@ -94,8 +87,8 @@ describe('internals', () => {
     const bb2 = INTERNAL_getBuildingBlocks(store2)
     expect(isBuildingBlocks(bb2)).toBe(true)
     expect(isBuildingBlocks(bbInternal)).toBe(true)
-    expect(bb0[14]).not.toBe(bb1[14])
-    expect(bb1[14]).toBe(bb2[14])
+    expect(bb0[21]).not.toBe(bb1[21])
+    expect(bb1[21]).toBe(bb2[21])
     store1.get(atom(0))
     expect(didRun.internal).toBeCalledTimes(1)
     expect(didRun.external).toBeCalledTimes(0)
