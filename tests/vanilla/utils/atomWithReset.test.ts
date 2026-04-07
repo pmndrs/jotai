@@ -4,7 +4,8 @@ import { RESET, atomWithReset } from 'jotai/vanilla/utils'
 
 describe('atomWithReset', () => {
   let initialValue: number
-  let testAtom: ReturnType<typeof atomWithReset<number>>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let testAtom: any
 
   beforeEach(() => {
     vi.clearAllMocks()
