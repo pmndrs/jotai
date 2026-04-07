@@ -1,3 +1,6 @@
+// FIXME
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { describe, expect, it, vi } from 'vitest'
 import { atom } from 'jotai/vanilla'
 import type { Atom, WritableAtom } from 'jotai/vanilla'
@@ -34,9 +37,9 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
     undefined,
     (_store, atom, get, set, ...args) => {
       if (inRestoreAtom) {
-        return set(atom, ...args)
+        return set(atom, ...(args as any))
       }
-      return atom.write(get, set, ...args)
+      return atom.write(get, set, ...(args as any))
     },
   )
   const debugMountedAtoms = new Set<Atom<unknown>>()
@@ -44,13 +47,13 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
     debugMountedAtoms.add(atom)
     const atomState = atomStateMap.get(atom)
     // For DevStoreRev4 compatibility
-    ;(atomState).m = mountedAtoms.get(atom)
+    ;(atomState as any).m = mountedAtoms.get(atom)
   })
   storeHooks.u.add(undefined, (atom) => {
     debugMountedAtoms.delete(atom)
     const atomState = atomStateMap.get(atom)
     // For DevStoreRev4 compatibility
-    delete (atomState).m
+    delete (atomState as any).m
   })
   const devStore: DevStore = {
     // store dev methods (these are tentative and subject to change without notice)
