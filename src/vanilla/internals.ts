@@ -263,7 +263,7 @@ function returnAtomValue<Value>(atomState: AtomState<Value>): Value {
 }
 
 function isPromiseLike(p: unknown): p is PromiseLike<unknown> {
-  return typeof (p as any)?.then === 'function'
+  return typeof (p as PromiseLike<unknown>)?.then === 'function'
 }
 
 function addPendingPromiseToDependency(
@@ -993,7 +993,7 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
 
 const BUILDING_BLOCK_storeGet: StoreGet = (store, atom) => {
   const readAtomState = getInternalBuildingBlocks(store)[14]
-  return returnAtomValue(readAtomState(store, atom)) as any
+  return returnAtomValue(readAtomState(store, atom))
 }
 
 const BUILDING_BLOCK_storeSet: StoreSet = (store, atom, ...args) => {
@@ -1004,7 +1004,7 @@ const BUILDING_BLOCK_storeSet: StoreSet = (store, atom, ...args) => {
   const writeAtomState = buildingBlocks[16]
   const prevChangedAtomsSize = changedAtoms.size
   try {
-    return writeAtomState(store, atom, ...args) as any
+    return writeAtomState(store, atom, ...args)
   } finally {
     if (changedAtoms.size !== prevChangedAtomsSize) {
       recomputeInvalidatedAtoms(store)

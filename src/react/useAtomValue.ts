@@ -6,7 +6,7 @@ import { useStore } from './Provider.ts'
 type Store = ReturnType<typeof useStore>
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
-  typeof (x as any)?.then === 'function'
+  typeof (x as PromiseLike<unknown>)?.then === 'function'
 
 const attachPromiseStatus = <T>(
   promise: PromiseLike<T> & {

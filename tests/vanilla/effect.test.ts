@@ -92,6 +92,7 @@ function syncEffect(effect: Effect): Atom<void> {
 
 const syncEffectChannelSymbol = Symbol()
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ensureSyncEffectChannel(store: any) {
   if (!store[syncEffectChannelSymbol]) {
     store[syncEffectChannelSymbol] = new Set<() => void>()

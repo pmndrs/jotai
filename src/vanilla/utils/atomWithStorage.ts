@@ -3,7 +3,7 @@ import type { WritableAtom } from '../../vanilla.ts'
 import { RESET } from './constants.ts'
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
-  typeof (x as any)?.then === 'function'
+  typeof (x as PromiseLike<unknown>)?.then === 'function'
 
 type Unsubscribe = () => void
 

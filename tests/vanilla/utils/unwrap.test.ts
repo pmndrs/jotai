@@ -3,7 +3,7 @@ import { atom, createStore } from 'jotai/vanilla'
 import { unwrap } from 'jotai/vanilla/utils'
 import { sleep } from '../../test-utils'
 
-let savedConsoleWarn: any
+let savedConsoleWarn: typeof console.warn
 
 describe('unwrap', () => {
   beforeEach(() => {

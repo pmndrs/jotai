@@ -292,6 +292,7 @@ it('should handle sync error (#1843)', () => {
 
 type LoadableComponentProps = {
   asyncAtom: Atom<Promise<number> | Promise<string> | string | number>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   effectCallback?: (loadableValue: any) => void
 }
 

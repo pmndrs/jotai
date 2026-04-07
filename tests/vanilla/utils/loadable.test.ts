@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import { loadable } from 'jotai/vanilla/utils'
 
-let savedConsoleWarn: any
+let savedConsoleWarn: typeof console.warn
 
 describe('loadable', () => {
   beforeEach(() => {

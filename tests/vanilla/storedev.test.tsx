@@ -1,3 +1,6 @@
+// FIXME
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { describe, expect, it, vi } from 'vitest'
 import { atom } from 'jotai/vanilla'
 import type { Atom, WritableAtom } from 'jotai/vanilla'
