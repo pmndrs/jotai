@@ -193,4 +193,27 @@ describe('unwrap', () => {
     store.get(unwrapAtom)
     expect(console.warn).not.toHaveBeenCalled()
   })
+
+  it('should expose the latest value after a linked async read resolves (#3296)', async () => {
+    const store = createStore()
+    const countAtom = atom(0)
+    const bumpAtom = atom(null, (_get, set) =>
+      set(countAtom, (count) => count + 1),
+    )
+    const asyncTarget = atom(async (get): Promise<{ someData: string }> => {
+      await Promise.resolve()
+      return { someData: String(get(countAtom)) }
+    })
+    const unwrappedTarget = unwrap(asyncTarget)
+    const linkedTarget = atom(async (get) => {
+      get(unwrappedTarget)
+      return get(asyncTarget)
+    })
+    const initialData = await store.get(linkedTarget)
+    expect(store.get(unwrappedTarget)).toBe(initialData)
+    store.set(bumpAtom)
+    const nextData = await store.get(linkedTarget)
+    expect(nextData).toEqual({ someData: '1' })
+    expect(store.get(unwrappedTarget)).toBe(nextData)
+  })
 })
