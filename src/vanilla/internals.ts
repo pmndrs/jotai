@@ -594,7 +594,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
 }
 
 // Dev only
-const storeMutationSet = new WeakSet<Readonly<BuildingBlocks>>()
+const storeMutationSet = new WeakSet<Store>()
 
 const BUILDING_BLOCK_readAtomState: ReadAtomState = (
   buildingBlocks,
@@ -739,12 +739,12 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
   const prevInvalidated = invalidatedAtoms.get(atom) === prevEpochNumber
   try {
     if (import.meta.env?.MODE !== 'production') {
-      storeMutationSet.delete(buildingBlocks)
+      storeMutationSet.delete(store)
     }
     const valueOrPromise = atomRead(atom, getter, options as never)
     if (
       import.meta.env?.MODE !== 'production' &&
-      storeMutationSet.has(buildingBlocks)
+      storeMutationSet.has(store)
     ) {
       console.warn(
         'Detected store mutation during atom read. This is not supported.',
@@ -837,7 +837,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
           throw new Error('atom not writable')
         }
         if (import.meta.env?.MODE !== 'production') {
-          storeMutationSet.add(buildingBlocks)
+          storeMutationSet.add(store)
         }
         const prevEpochNumber = aState.n
         const v = args[0] as V
