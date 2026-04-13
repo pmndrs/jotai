@@ -742,10 +742,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
       storeMutationSet.delete(store)
     }
     const valueOrPromise = atomRead(atom, getter, options as never)
-    if (
-      import.meta.env?.MODE !== 'production' &&
-      storeMutationSet.has(store)
-    ) {
+    if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {
       console.warn(
         'Detected store mutation during atom read. This is not supported.',
       )
