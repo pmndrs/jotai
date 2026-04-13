@@ -89,15 +89,18 @@ type ChangedAtoms = SetLike<AnyAtom>
 type Callbacks = SetLike<() => void>
 
 type AtomRead = <Value>(
+  store: Store,
   atom: Atom<Value>,
   ...params: Parameters<Atom<Value>['read']>
 ) => Value
 type AtomWrite = <Value, Args extends unknown[], Result>(
+  store: Store,
   atom: WritableAtom<Value, Args, Result>,
   ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
 ) => Result
-type AtomOnInit = <Value>(atom: Atom<Value>, store: Store) => void
+type AtomOnInit = <Value>(store: Store, atom: Atom<Value>) => void
 type AtomOnMount = <Value, Args extends unknown[], Result>(
+  store: Store,
   atom: WritableAtomWithOnMount<Value, Args, Result>,
   setAtom: (...args: Args) => Result,
 ) => OnUnmount | void
@@ -414,13 +417,13 @@ function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
 // Main functions
 //
 
-const BUILDING_BLOCK_atomRead: AtomRead = (atom, ...params) =>
+const BUILDING_BLOCK_atomRead: AtomRead = (_store, atom, ...params) =>
   atom.read(...params)
-const BUILDING_BLOCK_atomWrite: AtomWrite = (atom, ...params) =>
+const BUILDING_BLOCK_atomWrite: AtomWrite = (_store, atom, ...params) =>
   atom.write(...params)
-const BUILDING_BLOCK_atomOnInit: AtomOnInit = (atom, store) =>
+const BUILDING_BLOCK_atomOnInit: AtomOnInit = (store, atom) =>
   atom.INTERNAL_onInit?.(store)
-const BUILDING_BLOCK_atomOnMount: AtomOnMount = (atom, setAtom) =>
+const BUILDING_BLOCK_atomOnMount: AtomOnMount = (_store, atom, setAtom) =>
   atom.onMount?.(setAtom)
 
 const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
@@ -439,7 +442,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
-    atomOnInit?.(atom, store)
+    atomOnInit?.(store, atom)
   }
   return atomState as never
 }
@@ -741,7 +744,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
     if (import.meta.env?.MODE !== 'production') {
       storeMutationSet.delete(store)
     }
-    const valueOrPromise = atomRead(atom, getter, options as never)
+    const valueOrPromise = atomRead(store, atom, getter, options as never)
     if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {
       console.warn(
         'Detected store mutation during atom read. This is not supported.',
@@ -858,7 +861,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
     }
   }
   try {
-    return atomWrite(atom, getter, setter, ...args)
+    return atomWrite(store, atom, getter, setter, ...args)
   } finally {
     isSync = false
   }
@@ -944,7 +947,7 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (buildingBlocks, store, atom) => {
           }
         }
         try {
-          const onUnmount = atomOnMount(atom, setAtom)
+          const onUnmount = atomOnMount(store, atom, setAtom)
           if (onUnmount) {
             mounted!.u = () => {
               isSync = true
