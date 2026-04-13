@@ -7,9 +7,9 @@ import type {
   INTERNAL_InvalidatedAtoms,
 } from 'jotai/vanilla/internals'
 import {
-  INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
-  INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
-  INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
+  INTERNAL_buildStoreRev3 as INTERNAL_buildStore,
+  INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks,
+  INTERNAL_initializeStoreHooksRev3 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
 const buildingBlockLength = 29

@@ -5,8 +5,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { atom } from 'jotai/vanilla'
 import type { Atom, WritableAtom } from 'jotai/vanilla'
 import {
-  INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
-  INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
+  INTERNAL_buildStoreRev3 as INTERNAL_buildStore,
+  INTERNAL_initializeStoreHooksRev3 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 import type {
   INTERNAL_AtomState,

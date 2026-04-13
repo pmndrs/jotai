@@ -1182,9 +1182,9 @@ export {
   //
   // Export internal functions
   //
-  buildStore as INTERNAL_buildStoreRev2,
-  getBuildingBlocks as INTERNAL_getBuildingBlocksRev2,
-  initializeStoreHooks as INTERNAL_initializeStoreHooksRev2,
+  buildStore as INTERNAL_buildStoreRev3,
+  getBuildingBlocks as INTERNAL_getBuildingBlocksRev3,
+  initializeStoreHooks as INTERNAL_initializeStoreHooksRev3,
 
   //
   // Still experimental and some of them will be gone soon
