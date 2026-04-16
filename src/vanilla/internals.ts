@@ -145,7 +145,7 @@ type StoreSub = (
 ) => () => void
 type EnhanceBuildingBlocks = (
   buildingBlocks: Readonly<BuildingBlocks>,
-) => BuildingBlocks
+) => Readonly<BuildingBlocks>
 type AbortHandlersMap = WeakMapLike<PromiseLike<unknown>, Set<() => void>>
 type RegisterAbortHandler = <T>(
   ctx: Readonly<Context>,
