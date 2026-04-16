@@ -4,6 +4,7 @@ import type {
   INTERNAL_AtomState,
   INTERNAL_AtomStateMap,
   INTERNAL_BuildingBlocks,
+  INTERNAL_Context,
   INTERNAL_InvalidatedAtoms,
 } from 'jotai/vanilla/internals'
 import {
@@ -12,7 +13,7 @@ import {
   INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
-const buildingBlockLength = 30
+const buildingBlockLength = 29
 
 describe('internals', () => {
   it('should not return a sparse building blocks array', () => {
@@ -215,9 +216,8 @@ describe('internals', () => {
     const unsub = store.sub(leafAtom, () => {})
     const internalBuildingBlocks = INTERNAL_getBuildingBlocks(store)
     const invalidateDependents = internalBuildingBlocks[15]
-    expect(() =>
-      invalidateDependents(internalBuildingBlocks, baseAtom),
-    ).not.toThrow()
+    const ctx = [...internalBuildingBlocks, store] as INTERNAL_Context
+    expect(() => invalidateDependents(ctx, baseAtom)).not.toThrow()
     unsub()
   })
 })
