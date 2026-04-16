@@ -216,7 +216,7 @@ describe('internals', () => {
     const buildingBlocks = INTERNAL_getBuildingBlocks(store)
     const invalidateDependents = buildingBlocks[15]
     expect(() =>
-      invalidateDependents(buildingBlocks, store, baseAtom),
+      invalidateDependents([buildingBlocks, store], baseAtom),
     ).not.toThrow()
     unsub()
   })
