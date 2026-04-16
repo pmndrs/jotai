@@ -244,6 +244,12 @@ function hasInitialValue<T extends Atom<AnyValue>>(
   return 'init' in atom
 }
 
+function hasOnInit<T extends Atom<AnyValue>>(
+  atom: T,
+): atom is T & { INTERNAL_onInit: Atom<AnyValue>['INTERNAL_onInit'] } {
+  return 'INTERNAL_onInit' in atom
+}
+
 function isActuallyWritableAtom(atom: AnyAtom): atom is AnyWritableAtom {
   return !!(atom as AnyWritableAtom).write
 }
@@ -403,17 +409,19 @@ const BUILDING_BLOCK_atomOnMount: AtomOnMount = (_ctx, atom, setAtom) =>
 
 const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (ctx, atom) => {
   const atomStateMap = ctx[0]
-  const storeHooks = ctx[6]
-  const atomOnInit = ctx[9]
   if (import.meta.env?.MODE !== 'production' && !atom) {
     throw new Error('Atom is undefined or null')
   }
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
+    const storeHooks = ctx[6]
+    const atomOnInit = ctx[9]
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
-    atomOnInit?.(ctx, atom)
+    if (hasOnInit(atom)) {
+      atomOnInit(ctx, atom)
+    }
   }
   return atomState as never
 }
