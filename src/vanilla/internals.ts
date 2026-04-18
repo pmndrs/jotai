@@ -200,6 +200,7 @@ type BuildingBlocks = [
   abortPromise: AbortPromise, //                               27
   // store epoch
   storeEpochHolder: StoreEpochHolder, //                       28
+  thrownErrors: Map<AnyAtom, unknown>, //                        29
 ]
 
 export type {
@@ -419,6 +420,7 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
   const unmountCallbacks = buildingBlocks[5]
   const storeHooks = buildingBlocks[6]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
+  const thrownErrors = buildingBlocks[29]
   if (
     !storeHooks.f &&
     !changedAtoms.size &&
@@ -436,6 +438,8 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
     }
   }
   do {
+    errors.push(...Array.from(thrownErrors.values()))
+    thrownErrors.clear()
     if (storeHooks.f) {
       call(storeHooks.f)
     }
@@ -577,6 +581,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   const setAtomStateValueOrPromise = buildingBlocks[20]
   const registerAbortHandler = buildingBlocks[26]
   const storeEpochHolder = buildingBlocks[28]
+  const thrownErrors = buildingBlocks[29]
   const atomState = ensureAtomState(store, atom)
   const storeEpochNumber = storeEpochHolder[0]
   // See if we can skip recomputing this atom.
@@ -726,6 +731,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   } catch (error) {
     delete atomState.v
     atomState.e = error
+    thrownErrors.set(atom, error)
     ++atomState.n
     atomState.m = storeEpochNumber
     return atomState
@@ -969,6 +975,7 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   const buildingBlocks = getInternalBuildingBlocks(store)
   const ensureAtomState = buildingBlocks[11]
   const abortPromise = buildingBlocks[27]
+  const thrownErrors = buildingBlocks[29]
   const atomState = ensureAtomState(store, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
@@ -983,6 +990,7 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   }
   atomState.v = valueOrPromise
   delete atomState.e
+  thrownErrors.delete(atom)
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
     ++atomState.n
     if (isPromiseLike(prevValue)) {
@@ -1126,6 +1134,7 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
       BUILDING_BLOCK_abortPromise,
       // store epoch
       [0],
+      new Map(), // thrownErrors
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))

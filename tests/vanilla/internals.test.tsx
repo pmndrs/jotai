@@ -13,7 +13,7 @@ import {
   INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
-const buildingBlockLength = 29
+const buildingBlockLength = 30
 
 describe('internals', () => {
   it('every dependency (deep) should be mounted', () => {
