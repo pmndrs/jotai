@@ -1055,7 +1055,7 @@ const BUILDING_BLOCK_abortPromise: AbortPromise = (ctx, promise) => {
 
 const buildingBlockMap = new WeakMap<Store, Readonly<BuildingBlocks>>()
 
-function getBuildingBlocks(store: Store): BuildingBlocks {
+function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
   const buildingBlocks = buildingBlockMap.get(store)!
   if (import.meta.env?.MODE !== 'production' && !buildingBlocks) {
     throw new Error(
@@ -1066,7 +1066,7 @@ function getBuildingBlocks(store: Store): BuildingBlocks {
   if (enhanceBuildingBlocks) {
     return enhanceBuildingBlocks(buildingBlocks)
   }
-  return [...buildingBlocks]
+  return buildingBlocks
 }
 
 function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
