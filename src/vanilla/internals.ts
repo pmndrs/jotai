@@ -244,9 +244,7 @@ function hasInitialValue<T extends Atom<AnyValue>>(
   return 'init' in atom
 }
 
-function hasOnInit(
-  atom: AnyAtom,
-): atom is AnyAtom & {
+function hasOnInit(atom: AnyAtom): atom is AnyAtom & {
   INTERNAL_onInit: NonNullable<AnyAtom['INTERNAL_onInit']>
 } {
   return 'INTERNAL_onInit' in atom

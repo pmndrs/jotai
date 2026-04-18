@@ -1,7 +1,5 @@
 import React, { useDebugValue, useEffect, useReducer } from 'react'
-import {
-  INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
-} from '../vanilla/internals.ts'
+import { INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks } from '../vanilla/internals.ts'
 import type { Atom, ExtractAtomValue } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
 
