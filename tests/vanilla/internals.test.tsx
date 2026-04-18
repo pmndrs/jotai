@@ -4,7 +4,6 @@ import type {
   INTERNAL_AtomState,
   INTERNAL_AtomStateMap,
   INTERNAL_BuildingBlocks,
-  INTERNAL_Context,
   INTERNAL_InvalidatedAtoms,
 } from 'jotai/vanilla/internals'
 import {
@@ -216,7 +215,7 @@ describe('internals', () => {
     const unsub = store.sub(leafAtom, () => {})
     const internalBuildingBlocks = INTERNAL_getBuildingBlocks(store)
     const invalidateDependents = internalBuildingBlocks[15]
-    const ctx = [...internalBuildingBlocks, store] as INTERNAL_Context
+    const ctx = [...internalBuildingBlocks, store] as const
     expect(() => invalidateDependents(ctx, baseAtom)).not.toThrow()
     unsub()
   })
