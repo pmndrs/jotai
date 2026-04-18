@@ -123,7 +123,7 @@ type InvalidateDependents = (ctx: BuildingBlockContext, atom: AnyAtom) => void
 type WriteAtomState = <Value, Args extends unknown[], Result>(
   ctx: BuildingBlockContext,
   atom: WritableAtom<Value, Args, Result>,
-  ...args: Args
+  args: Args
 ) => Result
 type MountDependencies = (ctx: BuildingBlockContext, atom: AnyAtom) => void
 type MountAtom = <Value>(
@@ -714,7 +714,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (ctx, atom) => {
           }
           if (!isSync) {
             try {
-              return writeAtomState(ctx, atom, ...args)
+              return writeAtomState(ctx, atom, args)
             } finally {
               recomputeInvalidatedAtoms(ctx)
               flushCallbacks(ctx)
@@ -788,7 +788,7 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   }
 }
 
-const BUILDING_BLOCK_writeAtomState: WriteAtomState = (ctx, atom, ...args) => {
+const BUILDING_BLOCK_writeAtomState: WriteAtomState = (ctx, atom, args) => {
   const store = ctx[29]
   const changedAtoms = ctx[3]
   const storeHooks = ctx[6]
@@ -831,7 +831,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (ctx, atom, ...args) => {
         }
         return undefined as R
       } else {
-        return writeAtomState(ctx, a, ...args)
+        return writeAtomState(ctx, a, args)
       }
     } finally {
       if (!isSync) {
@@ -914,7 +914,7 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (ctx, atom) => {
         let isSync = true
         const setAtom = (...args: unknown[]) => {
           try {
-            return writeAtomState(ctx, atom, ...args)
+            return writeAtomState(ctx, atom, args)
           } finally {
             if (!isSync) {
               recomputeInvalidatedAtoms(ctx)
@@ -1022,7 +1022,7 @@ const BUILDING_BLOCK_storeSet: StoreSet = (ctx, atom, ...args) => {
   const writeAtomState = ctx[16]
   const prevChangedAtomsSize = changedAtoms.size
   try {
-    return writeAtomState(ctx, atom, ...args)
+    return writeAtomState(ctx, atom, args)
   } finally {
     if (changedAtoms.size !== prevChangedAtomsSize) {
       recomputeInvalidatedAtoms(ctx)
