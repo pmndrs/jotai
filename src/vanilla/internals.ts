@@ -244,9 +244,11 @@ function hasInitialValue<T extends Atom<AnyValue>>(
   return 'init' in atom
 }
 
-function hasOnInit<T extends Atom<AnyValue>>(
-  atom: T,
-): atom is T & { INTERNAL_onInit: Atom<AnyValue>['INTERNAL_onInit'] } {
+function hasOnInit(
+  atom: AnyAtom,
+): atom is AnyAtom & {
+  INTERNAL_onInit: NonNullable<AnyAtom['INTERNAL_onInit']>
+} {
   return 'INTERNAL_onInit' in atom
 }
 
@@ -260,7 +262,7 @@ function hasOnMount<Value, Args extends unknown[], Result>(
   return !!atom.onMount
 }
 
-function isAtomStateInitialized<Value>(atomState: AtomState<Value>): boolean {
+function isAtomStateInitialized(atomState: AtomState<AnyValue>): boolean {
   return 'v' in atomState || 'e' in atomState
 }
 
