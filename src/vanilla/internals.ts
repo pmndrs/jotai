@@ -90,60 +90,63 @@ type ChangedAtoms = SetLike<AnyAtom>
 type Callbacks = SetLike<() => void>
 
 type AtomRead = <Value>(
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   atom: Atom<Value>,
   ...params: Parameters<Atom<Value>['read']>
 ) => Value
 type AtomWrite = <Value, Args extends unknown[], Result>(
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   atom: WritableAtom<Value, Args, Result>,
   ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
 ) => Result
 type AtomOnInit = <Value>(
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   atom: Atom<Value> & WithOnInit,
 ) => void
 type AtomOnMount = <Value, Args extends unknown[], Result>(
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   atom: WritableAtom<Value, Args, Result> & WithOnMount<Args, Result>,
   setAtom: (...args: Args) => Result,
 ) => OnUnmount | void
 
 type EnsureAtomState = <Value>(
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   atom: Atom<Value>,
 ) => AtomState<Value>
-type FlushCallbacks = (ctx: Readonly<Context>) => void
-type RecomputeInvalidatedAtoms = (ctx: Readonly<Context>) => void
+type FlushCallbacks = (ctx: BuildingBlockContext) => void
+type RecomputeInvalidatedAtoms = (ctx: BuildingBlockContext) => void
 type ReadAtomState = <Value>(
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   atom: Atom<Value>,
 ) => AtomState<Value>
-type InvalidateDependents = (ctx: Readonly<Context>, atom: AnyAtom) => void
+type InvalidateDependents = (ctx: BuildingBlockContext, atom: AnyAtom) => void
 type WriteAtomState = <Value, Args extends unknown[], Result>(
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   atom: WritableAtom<Value, Args, Result>,
   ...args: Args
 ) => Result
-type MountDependencies = (ctx: Readonly<Context>, atom: AnyAtom) => void
-type MountAtom = <Value>(ctx: Readonly<Context>, atom: Atom<Value>) => Mounted
+type MountDependencies = (ctx: BuildingBlockContext, atom: AnyAtom) => void
+type MountAtom = <Value>(
+  ctx: BuildingBlockContext,
+  atom: Atom<Value>,
+) => Mounted
 type UnmountAtom = <Value>(
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   atom: Atom<Value>,
 ) => Mounted | undefined
 type SetAtomStateValueOrPromise = <Value>(
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   atom: Atom<Value>,
   valueOrPromise: Value,
 ) => void
-type StoreGet = <Value>(ctx: Readonly<Context>, atom: Atom<Value>) => Value
+type StoreGet = <Value>(ctx: BuildingBlockContext, atom: Atom<Value>) => Value
 type StoreSet = <Value, Args extends unknown[], Result>(
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   atom: WritableAtom<Value, Args, Result>,
   ...args: Args
 ) => Result
 type StoreSub = (
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   atom: AnyAtom,
   listener: () => void,
 ) => () => void
@@ -152,11 +155,14 @@ type EnhanceBuildingBlocks = (
 ) => Readonly<BuildingBlocks>
 type AbortHandlersMap = WeakMapLike<PromiseLike<unknown>, Set<() => void>>
 type RegisterAbortHandler = <T>(
-  ctx: Readonly<Context>,
+  ctx: BuildingBlockContext,
   promise: PromiseLike<T>,
   abortHandler: () => void,
 ) => void
-type AbortPromise = <T>(ctx: Readonly<Context>, promise: PromiseLike<T>) => void
+type AbortPromise = <T>(
+  ctx: BuildingBlockContext,
+  promise: PromiseLike<T>,
+) => void
 type StoreEpochHolder = [n: EpochNumber]
 
 type Store = {
@@ -206,7 +212,7 @@ type BuildingBlocks = [
   storeEpochHolder: StoreEpochHolder, //                       28
 ]
 
-type Context = [
+type BuildingBlockContext = readonly [
   ...BuildingBlocks,
   Store, //                                                    29
 ]
@@ -234,7 +240,6 @@ export type {
   UnmountAtom as INTERNAL_UnmountAtom,
   Store as INTERNAL_Store,
   BuildingBlocks as INTERNAL_BuildingBlocks,
-  Context as INTERNAL_Context,
   StoreHooks as INTERNAL_StoreHooks,
 }
 
@@ -1120,8 +1125,8 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
     BUILDING_BLOCK_abortPromise,
     [0], // store epoch
   ].map((bb, i) => buildArgs[i] || bb) as BuildingBlocks
-  const ctx: Context = [...buildingBlocks, store]
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))
+  const ctx: BuildingBlockContext = Object.freeze([...buildingBlocks, store])
   const storeGet = ctx[21]
   const storeSet = ctx[22]
   const storeSub = ctx[23]
