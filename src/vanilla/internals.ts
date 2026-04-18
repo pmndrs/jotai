@@ -123,7 +123,7 @@ type InvalidateDependents = (ctx: BuildingBlockContext, atom: AnyAtom) => void
 type WriteAtomState = <Value, Args extends unknown[], Result>(
   ctx: BuildingBlockContext,
   atom: WritableAtom<Value, Args, Result>,
-  args: Args
+  args: Args,
 ) => Result
 type MountDependencies = (ctx: BuildingBlockContext, atom: AnyAtom) => void
 type MountAtom = <Value>(
@@ -241,6 +241,7 @@ export type {
   Store as INTERNAL_Store,
   BuildingBlocks as INTERNAL_BuildingBlocks,
   StoreHooks as INTERNAL_StoreHooks,
+  BuildingBlockContext as INTERNAL_BuildingBlockContext,
 }
 
 //
@@ -1084,7 +1085,7 @@ function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
   return buildingBlocks
 }
 
-function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
+function buildStore(...partialBuildingBlocks: Partial<BuildingBlocks>): Store {
   const store: Store = {
     get: (atom) => storeGet(ctx, atom),
     set: (atom, ...args) => storeSet(ctx, atom, ...args),
@@ -1124,7 +1125,7 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
     BUILDING_BLOCK_registerAbortHandler,
     BUILDING_BLOCK_abortPromise,
     [0], // store epoch
-  ].map((bb, i) => buildArgs[i] || bb) as BuildingBlocks
+  ].map((bb, i) => partialBuildingBlocks[i] || bb) as BuildingBlocks
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))
   const ctx: BuildingBlockContext = Object.freeze([...buildingBlocks, store])
   const storeGet = ctx[21]
