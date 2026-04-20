@@ -30,9 +30,13 @@ export function atomWithCompare<Value>(
 Here's how you'd use it to make an atom that ignores updates that are shallow-equal:
 
 ```ts
-import { atomWithCompare } from 'XXX'
-import { shallowEquals } from 'YYY'
+import { atomWithCompare } from './atomWithCompare'
 import { CSSProperties } from 'react'
+
+const shallowEquals = (a: CSSProperties, b: CSSProperties) =>
+  Object.keys(a).every(
+    (key) => Object.is(a[key as keyof CSSProperties], b[key as keyof CSSProperties]),
+  ) && Object.keys(b).every((key) => key in a)
 
 const styleAtom = atomWithCompare<CSSProperties>(
   { backgroundColor: 'blue' },
