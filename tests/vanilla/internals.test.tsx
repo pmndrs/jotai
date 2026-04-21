@@ -3,6 +3,7 @@ import { atom, createStore } from 'jotai'
 import type {
   INTERNAL_AtomState,
   INTERNAL_AtomStateMap,
+  INTERNAL_BuildingBlockContext,
   INTERNAL_BuildingBlocks,
   INTERNAL_InvalidatedAtoms,
 } from 'jotai/vanilla/internals'
@@ -215,9 +216,9 @@ describe('internals', () => {
     const unsub = store.sub(leafAtom, () => {})
     const buildingBlocks = INTERNAL_getBuildingBlocks(store)
     const invalidateDependents = buildingBlocks[15]
-    expect(() =>
-      invalidateDependents([buildingBlocks, store], baseAtom),
-    ).not.toThrow()
+    const ctx: INTERNAL_BuildingBlockContext = [...buildingBlocks] as never
+    ctx.s = store
+    expect(() => invalidateDependents(ctx, baseAtom)).not.toThrow()
     unsub()
   })
 })

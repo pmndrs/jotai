@@ -1,5 +1,8 @@
 import React, { useDebugValue, useEffect, useReducer } from 'react'
-import { INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks } from '../vanilla/internals.ts'
+import {
+  type INTERNAL_BuildingBlockContext,
+  INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks,
+} from '../vanilla/internals.ts'
 import type { Atom, ExtractAtomValue } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
 
@@ -63,6 +66,8 @@ const createContinuablePromise = <T>(
   getValue: () => PromiseLike<T> | T,
 ) => {
   const buildingBlocks = INTERNAL_getBuildingBlocks(store)
+  const ctx: INTERNAL_BuildingBlockContext = [...buildingBlocks] as never
+  ctx.s = store
   const registerAbortHandler = buildingBlocks[26]
   let continuablePromise = continuablePromiseMap.get(promise)
   if (!continuablePromise) {
@@ -85,7 +90,7 @@ const createContinuablePromise = <T>(
             continuablePromiseMap.set(nextValue, continuablePromise!)
             curr = nextValue
             nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
-            registerAbortHandler([buildingBlocks, store], nextValue, onAbort)
+            registerAbortHandler(ctx, nextValue, onAbort)
           } else {
             resolve(nextValue)
           }
@@ -94,7 +99,7 @@ const createContinuablePromise = <T>(
         }
       }
       promise.then(onFulfilled(promise), onRejected(promise))
-      registerAbortHandler([buildingBlocks, store], promise, onAbort)
+      registerAbortHandler(ctx, promise, onAbort)
     })
     continuablePromiseMap.set(promise, continuablePromise)
   }
