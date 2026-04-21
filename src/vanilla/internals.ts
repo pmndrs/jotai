@@ -106,7 +106,7 @@ type AtomWrite = <Value, Args extends unknown[], Result>(
 type AtomOnInit = <Value>(
   buildingBlocks: Readonly<BuildingBlocks>,
   store: Store,
-  atom: Atom<Value>,
+  atom: Atom<Value> & WithOnInit,
 ) => void
 type AtomOnMount = <Value, Args extends unknown[], Result>(
   buildingBlocks: Readonly<BuildingBlocks>,
@@ -446,7 +446,7 @@ const BUILDING_BLOCK_atomWrite: AtomWrite = (
   ...params
 ) => atom.write(...params)
 const BUILDING_BLOCK_atomOnInit: AtomOnInit = (_buildingBlocks, store, atom) =>
-  atom.INTERNAL_onInit?.(store)
+  atom.INTERNAL_onInit(store)
 const BUILDING_BLOCK_atomOnMount: AtomOnMount = (
   _buildingBlocks,
   _store,
