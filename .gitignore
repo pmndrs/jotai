@@ -30,7 +30,7 @@ yarn-error.log*
 .DS_Store
 .idea
 
-# local vendored binaries (optional; see scripts/internals-pr-sync.sh)
+# local vendored binaries (e.g. official gh unpacked under .tools/)
 .tools/
 
 # examples
