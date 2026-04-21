@@ -89,17 +89,24 @@ type ChangedAtoms = SetLike<AnyAtom>
 type Callbacks = SetLike<() => void>
 
 type AtomRead = <Value>(
+  buildingBlocks: Readonly<BuildingBlocks>,
   store: Store,
   atom: Atom<Value>,
   ...params: Parameters<Atom<Value>['read']>
 ) => Value
 type AtomWrite = <Value, Args extends unknown[], Result>(
+  buildingBlocks: Readonly<BuildingBlocks>,
   store: Store,
   atom: WritableAtom<Value, Args, Result>,
   ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
 ) => Result
-type AtomOnInit = <Value>(store: Store, atom: Atom<Value>) => void
+type AtomOnInit = <Value>(
+  buildingBlocks: Readonly<BuildingBlocks>,
+  store: Store,
+  atom: Atom<Value>,
+) => void
 type AtomOnMount = <Value, Args extends unknown[], Result>(
+  buildingBlocks: Readonly<BuildingBlocks>,
   store: Store,
   atom: WritableAtomWithOnMount<Value, Args, Result>,
   setAtom: (...args: Args) => Result,
@@ -179,11 +186,13 @@ type EnhanceBuildingBlocks = (
 type AbortHandlersMap = WeakMapLike<PromiseLike<unknown>, Set<() => void>>
 type RegisterAbortHandler = <T>(
   buildingBlocks: Readonly<BuildingBlocks>,
+  store: Store,
   promise: PromiseLike<T>,
   abortHandler: () => void,
 ) => void
 type AbortPromise = <T>(
   buildingBlocks: Readonly<BuildingBlocks>,
+  store: Store,
   promise: PromiseLike<T>,
 ) => void
 type StoreEpochHolder = [n: EpochNumber]
@@ -417,14 +426,26 @@ function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
 // Main functions
 //
 
-const BUILDING_BLOCK_atomRead: AtomRead = (_store, atom, ...params) =>
-  atom.read(...params)
-const BUILDING_BLOCK_atomWrite: AtomWrite = (_store, atom, ...params) =>
-  atom.write(...params)
-const BUILDING_BLOCK_atomOnInit: AtomOnInit = (store, atom) =>
+const BUILDING_BLOCK_atomRead: AtomRead = (
+  _buildingBlocks,
+  _store,
+  atom,
+  ...params
+) => atom.read(...params)
+const BUILDING_BLOCK_atomWrite: AtomWrite = (
+  _buildingBlocks,
+  _store,
+  atom,
+  ...params
+) => atom.write(...params)
+const BUILDING_BLOCK_atomOnInit: AtomOnInit = (_buildingBlocks, store, atom) =>
   atom.INTERNAL_onInit?.(store)
-const BUILDING_BLOCK_atomOnMount: AtomOnMount = (_store, atom, setAtom) =>
-  atom.onMount?.(setAtom)
+const BUILDING_BLOCK_atomOnMount: AtomOnMount = (
+  _buildingBlocks,
+  _store,
+  atom,
+  setAtom,
+) => atom.onMount?.(setAtom)
 
 const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
   buildingBlocks,
@@ -442,7 +463,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
-    atomOnInit?.(store, atom)
+    atomOnInit?.(buildingBlocks, store, atom)
   }
   return atomState as never
 }
@@ -744,7 +765,13 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
     if (import.meta.env?.MODE !== 'production') {
       storeMutationSet.delete(store)
     }
-    const valueOrPromise = atomRead(store, atom, getter, options as never)
+    const valueOrPromise = atomRead(
+      buildingBlocks,
+      store,
+      atom,
+      getter,
+      options as never,
+    )
     if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {
       console.warn(
         'Detected store mutation during atom read. This is not supported.',
@@ -752,7 +779,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
     }
     setAtomStateValueOrPromise(buildingBlocks, store, atom, valueOrPromise)
     if (isPromiseLike(valueOrPromise)) {
-      registerAbortHandler(buildingBlocks, valueOrPromise, () =>
+      registerAbortHandler(buildingBlocks, store, valueOrPromise, () =>
         controller?.abort(),
       )
       const settle = () => {
@@ -861,7 +888,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
     }
   }
   try {
-    return atomWrite(store, atom, getter, setter, ...args)
+    return atomWrite(buildingBlocks, store, atom, getter, setter, ...args)
   } finally {
     isSync = false
   }
@@ -947,7 +974,7 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (buildingBlocks, store, atom) => {
           }
         }
         try {
-          const onUnmount = atomOnMount(store, atom, setAtom)
+          const onUnmount = atomOnMount(buildingBlocks, store, atom, setAtom)
           if (onUnmount) {
             mounted!.u = () => {
               isSync = true
@@ -1034,7 +1061,7 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
     ++atomState.n
     if (isPromiseLike(prevValue)) {
-      abortPromise(buildingBlocks, prevValue)
+      abortPromise(buildingBlocks, store, prevValue)
     }
   }
 }
@@ -1087,6 +1114,7 @@ const BUILDING_BLOCK_storeSub: StoreSub = (
 
 const BUILDING_BLOCK_registerAbortHandler: RegisterAbortHandler = (
   buildingBlocks,
+  _store,
   promise,
   abortHandler,
 ) => {
@@ -1101,7 +1129,11 @@ const BUILDING_BLOCK_registerAbortHandler: RegisterAbortHandler = (
   abortHandlers.add(abortHandler)
 }
 
-const BUILDING_BLOCK_abortPromise: AbortPromise = (buildingBlocks, promise) => {
+const BUILDING_BLOCK_abortPromise: AbortPromise = (
+  buildingBlocks,
+  _store,
+  promise,
+) => {
   const abortHandlersMap = buildingBlocks[25]
   const abortHandlers = abortHandlersMap.get(promise)
   abortHandlers?.forEach((fn) => fn())
