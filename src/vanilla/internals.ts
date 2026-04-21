@@ -471,7 +471,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
     if (hasOnInit(atom)) {
-      atomOnInit?.(buildingBlocks, store, atom)
+      atomOnInit(buildingBlocks, store, atom)
     }
   }
   return atomState as never
