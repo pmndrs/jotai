@@ -51,18 +51,57 @@ FORK_OWNER="${FORK_OWNER:-$PARSED_OWNER}"
 FORK_REPO="${FORK_REPO:-$PARSED_REPO}"
 AUTH_PUSH_URL="https://oauth2:${PAT}@github.com/${FORK_OWNER}/${FORK_REPO}.git"
 
-DOCS="$ROOT/.github/pr-descriptions-internals-split.md"
-if [[ ! -f "$DOCS" ]]; then
-  echo "Missing $DOCS" >&2
-  exit 1
-fi
-
 BODY1="$(mktemp)"
 BODY2="$(mktemp)"
 trap 'rm -f "$BODY1" "$BODY2"' EXIT
 
-awk '/^## PR 1/ {p=1; next} /^## PR 2/ {p=0; next} p' "$DOCS" >"$BODY1"
-awk '/^## PR 2/ {p=1; next} /^## Local branch tips/ {p=0; next} p' "$DOCS" >"$BODY2"
+cat >"$BODY1" <<'PRBODY1'
+
+**Title:** `refactor(internals): Rev3 type narrowing for onMount hooks`
+
+**Description:**
+
+### Summary
+
+Type-only / helper improvements for Rev3 building blocks. **`hasOnInit` is not in this PR.** `BUILDING_BLOCK_ensureAtomState` still calls `atomOnInit?.(buildingBlocks, store, atom)` on every new atom state (same as the upstream base).
+
+### Changes
+
+- `import type` for `Atom` / `WritableAtom`; add `ExtractAtomArgs` / `ExtractAtomResult` from `./typeUtils.ts`.
+- Replace `WritableAtomWithOnMount` with `WithOnMount` and use `WritableAtom<…> & WithOnMount<…>` on `AtomOnMount`.
+- Add `ActuallyWritableAtom` and narrow `isActuallyWritableAtom` via `typeof write === 'function'`.
+- Generic `hasOnMount` using `ExtractAtomArgs` / `ExtractAtomResult`.
+- Small `hasInitialValue` / `isAtomStateInitialized` tweaks.
+
+### Base
+
+**`upstream/breaking/building-blocks-in-params`**
+PRBODY1
+
+cat >"$BODY2" <<'PRBODY2'
+
+**Title:** `fix(internals): guard atomOnInit hook with hasOnInit`
+
+**Description:**
+
+### Summary
+
+Adds **`type WithOnInit`**, the **`hasOnInit`** predicate, and the **`ensureAtomState`** guard so `atomOnInit` runs only when the atom defines `INTERNAL_onInit` (matching **`6fb3c48f`**). **All `hasOnInit` / `WithOnInit` / guard logic lives in this PR.**
+
+### Changes
+
+- `type WithOnInit` after the writable `onMount` type alias (upstream shape).
+- `hasOnInit` helper (placed above `// Main functions` so this PR merges cleanly with PR 1).
+- In `BUILDING_BLOCK_ensureAtomState`, call `atomOnInit?.(…)` only inside `if (hasOnInit(atom)) { … }`.
+
+### Base
+
+**`upstream/breaking/building-blocks-in-params`**
+
+### Merge order
+
+Either PR can land first; the second merges cleanly.
+PRBODY2
 
 UPSTREAM_REPO="${UPSTREAM_REPO:-pmndrs/jotai}"
 BASE_BRANCH="${BASE_BRANCH:-breaking/building-blocks-in-params}"
