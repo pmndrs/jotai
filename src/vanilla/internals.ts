@@ -13,6 +13,9 @@ type WritableAtomWithOnMount<Value, Args extends unknown[], Result> = Omit<
 > & {
   onMount: NonNullable<WritableAtom<Value, Args, Result>['onMount']>
 }
+type WithOnInit = {
+  INTERNAL_onInit: NonNullable<Atom<AnyValue>['INTERNAL_onInit']>
+}
 type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
@@ -103,7 +106,7 @@ type AtomWrite = <Value, Args extends unknown[], Result>(
 type AtomOnInit = <Value>(
   buildingBlocks: Readonly<BuildingBlocks>,
   store: Store,
-  atom: Atom<Value>,
+  atom: Atom<Value> & WithOnInit,
 ) => void
 type AtomOnMount = <Value, Args extends unknown[], Result>(
   buildingBlocks: Readonly<BuildingBlocks>,
@@ -422,6 +425,10 @@ function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
   return storeHooks as Required<StoreHooks>
 }
 
+function hasOnInit<T extends AnyAtom>(atom: T): atom is T & WithOnInit {
+  return !!atom.INTERNAL_onInit
+}
+
 //
 // Main functions
 //
@@ -439,7 +446,7 @@ const BUILDING_BLOCK_atomWrite: AtomWrite = (
   ...params
 ) => atom.write(...params)
 const BUILDING_BLOCK_atomOnInit: AtomOnInit = (_buildingBlocks, store, atom) =>
-  atom.INTERNAL_onInit?.(store)
+  atom.INTERNAL_onInit(store)
 const BUILDING_BLOCK_atomOnMount: AtomOnMount = (
   _buildingBlocks,
   _store,
@@ -463,7 +470,9 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
-    atomOnInit?.(buildingBlocks, store, atom)
+    if (hasOnInit(atom)) {
+      atomOnInit(buildingBlocks, store, atom)
+    }
   }
   return atomState as never
 }
