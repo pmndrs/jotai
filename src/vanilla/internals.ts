@@ -453,13 +453,10 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
   atom,
 ) => {
   const atomStateMap = buildingBlocks[0]
-  const storeHooks = buildingBlocks[6]
-  const atomOnInit = buildingBlocks[9]
-  if (import.meta.env?.MODE !== 'production' && !atom) {
-    throw new Error('Atom is undefined or null')
-  }
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
+    const storeHooks = buildingBlocks[6]
+    const atomOnInit = buildingBlocks[9]
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
