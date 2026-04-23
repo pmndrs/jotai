@@ -7,9 +7,9 @@ import type {
   INTERNAL_InvalidatedAtoms,
 } from 'jotai/vanilla/internals'
 import {
-  INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
-  INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
-  INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
+  INTERNAL_buildStoreRev3 as INTERNAL_buildStore,
+  INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks,
+  INTERNAL_initializeStoreHooksRev3 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
 const buildingBlockLength = 29
@@ -203,9 +203,9 @@ describe('internals', () => {
       } as INTERNAL_InvalidatedAtoms
     })()
 
-    const buildingBlocks: Partial<INTERNAL_BuildingBlocks> = []
-    buildingBlocks[2] = invalidatedAtoms
-    const store = INTERNAL_buildStore(...buildingBlocks)
+    const partialBuildingBlocks: Partial<INTERNAL_BuildingBlocks> = []
+    partialBuildingBlocks[2] = invalidatedAtoms
+    const store = INTERNAL_buildStore(...partialBuildingBlocks)
 
     const baseAtom = atom(0)
     const midAtom1 = atom((get) => get(baseAtom))
@@ -213,8 +213,11 @@ describe('internals', () => {
     const leafAtom = atom((get) => get(midAtom1) + get(midAtom2))
 
     const unsub = store.sub(leafAtom, () => {})
-    const invalidateDependents = INTERNAL_getBuildingBlocks(store)[15]
-    expect(() => invalidateDependents(store, baseAtom)).not.toThrow()
+    const buildingBlocks = INTERNAL_getBuildingBlocks(store)
+    const invalidateDependents = buildingBlocks[15]
+    expect(() =>
+      invalidateDependents(buildingBlocks, store, baseAtom),
+    ).not.toThrow()
     unsub()
   })
 })

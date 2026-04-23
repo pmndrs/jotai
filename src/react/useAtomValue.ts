@@ -1,5 +1,5 @@
 import React, { useDebugValue, useEffect, useReducer } from 'react'
-import { INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks } from '../vanilla/internals.ts'
+import { INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks } from '../vanilla/internals.ts'
 import type { Atom, ExtractAtomValue } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
 
@@ -85,7 +85,7 @@ const createContinuablePromise = <T>(
             continuablePromiseMap.set(nextValue, continuablePromise!)
             curr = nextValue
             nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
-            registerAbortHandler(store, nextValue, onAbort)
+            registerAbortHandler(buildingBlocks, store, nextValue, onAbort)
           } else {
             resolve(nextValue)
           }
@@ -94,7 +94,7 @@ const createContinuablePromise = <T>(
         }
       }
       promise.then(onFulfilled(promise), onRejected(promise))
-      registerAbortHandler(store, promise, onAbort)
+      registerAbortHandler(buildingBlocks, store, promise, onAbort)
     })
     continuablePromiseMap.set(promise, continuablePromise)
   }
