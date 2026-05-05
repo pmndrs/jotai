@@ -1,17 +1,18 @@
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
-import { type Atom, type WritableAtom } from './atom.ts'
+import type { Atom, WritableAtom } from './atom.ts'
+import type { ExtractAtomArgs, ExtractAtomResult } from './typeUtils.ts'
 
 type AnyValue = unknown
 type AnyError = unknown
 type AnyAtom = Atom<AnyValue>
 type AnyWritableAtom = WritableAtom<AnyValue, unknown[], unknown>
-type WritableAtomWithOnMount<Value, Args extends unknown[], Result> = Omit<
-  WritableAtom<Value, Args, Result>,
-  'onMount'
-> & {
-  onMount: NonNullable<WritableAtom<Value, Args, Result>['onMount']>
+type WithOnMount<Args extends unknown[], Result> = {
+  onMount: NonNullable<WritableAtom<AnyValue, Args, Result>['onMount']>
+}
+type WithOnInit = {
+  INTERNAL_onInit: NonNullable<Atom<AnyValue>['INTERNAL_onInit']>
 }
 type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
@@ -103,12 +104,12 @@ type AtomWrite = <Value, Args extends unknown[], Result>(
 type AtomOnInit = <Value>(
   buildingBlocks: Readonly<BuildingBlocks>,
   store: Store,
-  atom: Atom<Value>,
+  atom: Atom<Value> & WithOnInit,
 ) => void
 type AtomOnMount = <Value, Args extends unknown[], Result>(
   buildingBlocks: Readonly<BuildingBlocks>,
   store: Store,
-  atom: WritableAtomWithOnMount<Value, Args, Result>,
+  atom: WritableAtom<Value, Args, Result> & WithOnMount<Args, Result>,
   setAtom: (...args: Args) => Result,
 ) => OnUnmount | void
 
@@ -274,23 +275,32 @@ export type {
 // Some util functions
 //
 
-function hasInitialValue<T extends Atom<AnyValue>>(
+function hasInitialValue<T extends AnyAtom>(
   atom: T,
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) {
   return 'init' in atom
 }
 
-function isActuallyWritableAtom(atom: AnyAtom): atom is AnyWritableAtom {
-  return !!(atom as AnyWritableAtom).write
+type ActuallyWritableAtom<T extends AnyAtom> =
+  T extends WritableAtom<infer V, infer A, infer R>
+    ? T & WritableAtom<V, A, R>
+    : T extends Atom<infer V>
+      ? T & WritableAtom<V, unknown[], unknown>
+      : never
+
+function isActuallyWritableAtom<T extends AnyAtom>(
+  atom: T,
+): atom is ActuallyWritableAtom<T> {
+  return typeof (atom as { write?: unknown }).write === 'function'
 }
 
-function hasOnMount<Value, Args extends unknown[], Result>(
-  atom: WritableAtom<Value, Args, Result>,
-): atom is WritableAtomWithOnMount<Value, Args, Result> {
+function hasOnMount<T extends AnyWritableAtom>(
+  atom: T,
+): atom is T & WithOnMount<ExtractAtomArgs<T>, ExtractAtomResult<T>> {
   return !!atom.onMount
 }
 
-function isAtomStateInitialized<Value>(atomState: AtomState<Value>): boolean {
+function isAtomStateInitialized(atomState: AtomState<AnyValue>): boolean {
   return 'v' in atomState || 'e' in atomState
 }
 
@@ -422,6 +432,10 @@ function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
   return storeHooks as Required<StoreHooks>
 }
 
+function hasOnInit<T extends AnyAtom>(atom: T): atom is T & WithOnInit {
+  return !!atom.INTERNAL_onInit
+}
+
 //
 // Main functions
 //
@@ -439,7 +453,7 @@ const BUILDING_BLOCK_atomWrite: AtomWrite = (
   ...params
 ) => atom.write(...params)
 const BUILDING_BLOCK_atomOnInit: AtomOnInit = (_buildingBlocks, store, atom) =>
-  atom.INTERNAL_onInit?.(store)
+  atom.INTERNAL_onInit(store)
 const BUILDING_BLOCK_atomOnMount: AtomOnMount = (
   _buildingBlocks,
   _store,
@@ -460,7 +474,9 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
-    atomOnInit?.(buildingBlocks, store, atom)
+    if (hasOnInit(atom)) {
+      atomOnInit(buildingBlocks, store, atom)
+    }
   }
   return atomState as never
 }
