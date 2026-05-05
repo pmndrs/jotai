@@ -469,6 +469,8 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
   const atomStateMap = buildingBlocks[0]
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
+    // Because ensureAtomState is a hot spot, we intentionally delay the evaluation even though this pattern is exceptional.
+    // Ref: https://github.com/pmndrs/jotai/pull/3313
     const storeHooks = buildingBlocks[6]
     const atomOnInit = buildingBlocks[9]
     atomState = { d: new Map(), p: new Set(), n: 0 }
