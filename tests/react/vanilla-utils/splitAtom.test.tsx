@@ -407,7 +407,6 @@ it('no error with cached atoms (fix 510)', () => {
 
   function useCachedAtoms<T>(atoms: T[]) {
     const prevAtoms = useRef<T[]>(atoms)
-    // eslint-disable-next-line react-hooks/refs
     return prevAtoms.current
   }
 

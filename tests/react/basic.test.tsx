@@ -720,7 +720,6 @@ it('set atom right after useEffect (#208)', async () => {
     }
     useEffect(() => {
       effectFn(count)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState(null) // this is important to repro (set something stable)
     }, [count, setState])
     return <div>count: {count}</div>

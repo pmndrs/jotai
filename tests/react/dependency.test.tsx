@@ -898,7 +898,6 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', ()
     if (!memoizedAtomRef.current) {
       const derivedFn = vi.fn((get: Getter) => get(countAtom))
       if (!firstDerivedFn) {
-        // eslint-disable-next-line react-hooks/globals
         firstDerivedFn = derivedFn
       }
       memoizedAtomRef.current = atom(derivedFn)
