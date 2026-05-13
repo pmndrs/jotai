@@ -54,6 +54,24 @@ function MyComponent() {
 }
 ```
 
+#### Seeding the first instance
+
+If a bunja needs creation-time data, use `bunja.withSeed`.
+A default seed is required when the bunja is declared, so callers may still omit the seed.
+
+The seed is used only when a matching bunja instance is first created.
+It is not part of the bunja instance identity.
+If the matching instance already exists, later seeds are ignored.
+
+```ts
+const formBunja = bunja.withSeed({ title: '' }, (seed) => {
+  const titleAtom = atom(seed.title)
+  return { titleAtom }
+})
+
+useBunja({ bunja: formBunja, seed: { title: 'Draft' } })
+```
+
 ### Defining a Bunja that relies on other Bunja
 
 If you want to manage a state with a broad lifetime and another state with a narrower lifetime, you can create a (narrower) bunja that depends on a (broader) bunja.
@@ -220,14 +238,14 @@ function MyComponent() {
 
 ##### Doing the same thing inside a bunja
 
-You can use `bunja.fork` to inject scope values from within a bunja initialization function.
+You can pass scope value pairs as the second argument to `bunja.use` to override scope values from within a bunja initialization function.
 
 ```ts
 const myBunja = bunja(() => {
-  const fooData = bunja.fork(fetchBunja, [
+  const fooData = bunja.use(fetchBunja, [
     UrlScope.bind('https://example.com/foo'),
   ])
-  const barData = bunja.fork(fetchBunja, [
+  const barData = bunja.use(fetchBunja, [
     UrlScope.bind('https://example.com/bar'),
   ])
 
