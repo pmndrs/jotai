@@ -58,7 +58,7 @@ Usage:
 ```js
 const storage = createJSONStorage(
   // getStringStorage
-  () => localStorage, // or window.sessionStorage, asyncStorage or alike
+  () => window.localStorage, // or window.sessionStorage, asyncStorage or alike
   // options (optional)
   {
     reviver, // optional reviver option for JSON.parse
