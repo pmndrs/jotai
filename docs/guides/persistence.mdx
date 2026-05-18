@@ -86,7 +86,9 @@ Same as AsyncStorage, just use `atomWithStorage` util and override the default s
 ```js
 import { atomWithStorage, createJSONStorage } from 'jotai/utils'
 
-const storage = createJSONStorage(() => sessionStorage)
+const storage = createJSONStorage(() =>
+  typeof window !== 'undefined' ? window.sessionStorage : undefined,
+)
 const someAtom = atomWithStorage('some-key', someInitialValue, storage)
 ```
 

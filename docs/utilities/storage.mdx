@@ -58,7 +58,7 @@ Usage:
 ```js
 const storage = createJSONStorage(
   // getStringStorage
-  () => localStorage, // or sessionStorage, asyncStorage or alike
+  () => localStorage, // or window.sessionStorage, asyncStorage or alike
   // options (optional)
   {
     reviver, // optional reviver option for JSON.parse
@@ -70,6 +70,20 @@ const storage = createJSONStorage(
 Note: `JSON.parse` is not type safe. If it can't accept any types, some kind of validation would be necessary for production apps.
 
 ### Server-side rendering
+
+When using `atomWithStorage` in an environment that renders on the server, such as Next.js or Waku, the storage backing the atom should safely return `undefined` on the server.
+
+For example, use a guarded `createJSONStorage` getter when using `sessionStorage` in a Next.js static export:
+
+```js
+import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+
+const storage = createJSONStorage(() =>
+  typeof window !== 'undefined' ? window.sessionStorage : undefined,
+)
+
+const someAtom = atomWithStorage('some-key', someInitialValue, storage)
+```
 
 Any JSX markup that depends on the value of a stored atom (e.g., a `className` or `style` prop) will use the `initialValue` when rendered on the server (since `localStorage` and `sessionStorage` are not available on the server).
 

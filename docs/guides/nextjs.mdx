@@ -9,6 +9,37 @@ keywords: next,nextjs
 
 Jotai has support for hydration of atoms with `useHydrateAtoms`. The documentation for the hook can be seen [here](../utilities/ssr.mdx).
 
+### Browser storage
+
+Next.js still prerenders client components during static export, so browser storage APIs such as `localStorage` and `sessionStorage` are not available during the server render.
+
+If you use `atomWithStorage` with `createJSONStorage`, avoid referencing browser storage globals directly. Use `window` behind a server guard instead:
+
+```js
+import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+
+const storage = createJSONStorage(() =>
+  typeof window !== 'undefined' ? window.sessionStorage : undefined,
+)
+
+const someAtom = atomWithStorage('some-key', someInitialValue, storage)
+```
+
+If the rendered UI depends on the stored value, render that subtree only on the client to avoid hydration mismatches:
+
+```js
+import dynamic from 'next/dynamic'
+
+const StoredPreferences = dynamic(
+  () => import('../components/StoredPreferences'),
+  {
+    ssr: false,
+  },
+)
+```
+
+See the [storage documentation](../utilities/storage.mdx#server-side-rendering) for more details.
+
 ### Sync with router
 
 It's possible to sync Jotai with the router. You can achieve this with `atomWithHash`:
