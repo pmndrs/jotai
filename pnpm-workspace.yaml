@@ -1,7 +1,7 @@
-packages:
-  - .
-minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - 'react'
   - 'react-dom'
   - 'scheduler'
+allowBuilds:
+  esbuild: false
+  unrs-resolver: false
