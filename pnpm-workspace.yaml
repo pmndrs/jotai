@@ -5,3 +5,4 @@ minimumReleaseAgeExclude:
 allowBuilds:
   esbuild: false
   unrs-resolver: false
+  core-js-pure: false
