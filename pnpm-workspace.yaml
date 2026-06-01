@@ -1,3 +1,6 @@
+packages:
+  - .
+  - website
 minimumReleaseAgeExclude:
   - 'react'
   - 'react-dom'
