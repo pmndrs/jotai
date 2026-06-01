@@ -255,4 +255,10 @@ exports.createPages = ({ actions }) => {
     toPath: `/docs/extensions/zustand`,
     isPermanent: false,
   })
+
+  createRedirect({
+    fromPath: `/docs/third-party/derive`,
+    toPath: `/docs/third-party/eager`,
+    isPermanent: false,
+  })
 }

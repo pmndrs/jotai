@@ -1,0 +1,203 @@
+---
+title: Eager
+description: This doc describes Eager extension.
+nav: 5.01
+keywords: eager,derive,derived,async,zalgo,suspense,promise,react
+---
+
+**Jōtai Eager** provides primitives for building asynchronous data graphs that act on values as soon as they are available (either awaiting for them, or acting on them synchronously).
+
+---
+
+<CodeSandbox id="jotai-eager-example-pf38dg" />
+
+### When is this useful?
+
+- When local updates to the cache cause micro-suspensions
+- When unnecessary recomputation causes performance issues
+
+### Install
+
+```sh
+npm install jotai-eager
+```
+
+## Motivation
+
+Jōtai offers powerful primitives for working with asynchronous data outside of the web framework (e.g. React), and allows the UI and business logic to properly integrate with the data layer. Many data-fetching integrations offer a peek into the client-side cache via atoms. When the cache is not yet populated, the atom has to resolve to a Promise of the value. However, if the value already exists in cache, and we do an optimistic update, then the value can be made available downstream immediately.
+
+Building data graphs with these dual-natured (sometimes async, sometimes sync) atoms as a base can lead to unnecessary rerenders, stale values and micro-suspensions (in case of React) if not handled with care.
+
+## Eager atoms
+
+Let's say we have an atom that fetches names of pets from an API, and a filter atom:
+
+```ts
+const petsAtom = atom<Promise<string[]>>(...);
+const filterAtom = atom('cat');
+```
+
+To create an atom of filtered pets using vanilla atoms, we would do the following:
+
+```ts
+const filteredPetsAtom = atom(async (get) => {
+  const filter = get(filterAtom)
+  const pets = await get(petsAtom)
+  return pets.filter((name) => name.includes(filter))
+}) // => Atom<Promise<string[]>>
+```
+
+`filteredPetsAtom` always returns a promise, even though the result
+could be computed eagerly if the `filterAtom` was
+the only changed dependency. We can fix that with **jotai-eager**:
+
+```ts
+import { eagerAtom } from 'jotai-eager'
+
+const filteredPetsAtom = eagerAtom((get) => {
+  const filter = get(filterAtom)
+  const pets = get(petsAtom) // ✨ no await ✨
+  return pets.filter((name) => name.includes(filter))
+}) // => Atom<Promise<string[]> | string[]>
+```
+
+Now, the type reflects the eager behavior of this atom.
+Its value will be `string[]` if the only thing that
+changed is the filter, and `Promise<string[]>` otherwise!
+
+## Avoiding request waterfalls
+
+If your atom has multiple async dependencies, it's best to initiate all of them simultaneously and wait for their results, instead of awaiting them sequentially. In vanilla async atoms, `Promise.all(...)` is the API to use, but in eager atoms, use the `get.all()` API:
+
+```ts
+const myMessages = eagerAtom((get) => {
+  const [user, messages] = get.all([userAtom, messagesAtom])
+  return messages.filter((msg) => msg.authorId === user.id)
+}) // => Atom<Message[] | Promise<Message[]>>
+```
+
+## Awaiting a Promise that is not another atom's value
+
+We can use the `get.await` API to await regular Promises inside `eagerAtom` definitions, as long as we make sure that the Promise
+we're passing is consistent across invocations of the atom's read function.
+
+```ts
+const statusAtom = eagerAtom((get) => {
+  const statusPromise = get(currentInvoiceAtom).getStatus() // => Promise<InvoiceStatus>
+  const status = get.await(statusPromise)
+  //    ^? InvoiceStatus
+  return status
+})
+```
+
+## Handling Loading States with `loadable`
+
+The `loadable` API wraps an atom to provide a consistent loading state representation, sharing a Promise cache between all jotai-eager APIs to minimize suspensions.
+
+```ts
+import { atom } from 'jotai';
+import { loadable } from 'jotai-eager';
+
+const asyncAtom = atom(async () => 'data');
+const loadableAtom = loadable(asyncAtom);
+
+// Use in component:
+const state = useAtom(loadableAtom);
+if (state.state === 'loading') return <div>Loading...</div>;
+if (state.state === 'hasError') return <div>Error: {state.error}</div>;
+return <div>{state.data}</div>;
+```
+
+## Handling Pending States with `withPending`
+
+The `withPending` API wraps an atom to handle unresolved values by returning a fallback, providing an alternative to Jotai's `unwrap` with enhanced pending state management.
+
+```ts
+import { atom } from 'jotai'
+import { withPending } from 'jotai-eager'
+
+const asyncAtom = atom(Promise.resolve('data'))
+const wrappedAtom = withPending(asyncAtom, () => 'Loading...')
+
+// Returns 'Loading...' while pending, then 'data'
+```
+
+## Using `try` & `catch` inside eager atoms
+
+Eager atoms internally use exceptions to suspend computation of the atom until an async dependency is fulfilled (similar to React's suspense behavior, but does not require React to function). This means that using exception handling inside eager atoms has to be instrumented with an additional call to `isEagerError`.
+
+```ts
+import { eagerAtom, isEagerError } from 'jotai-eager'
+
+const fooAtom = eagerAtom((get) => {
+  try {
+    // ...
+  } catch (e) {
+    if (isEagerError(e)) {
+      // Rethrow the error to be handled by `jotai-eager`
+      throw e
+    }
+
+    // ...
+  }
+})
+```
+
+## Awaiting a Promise that is created inside the atom
+
+Since the read function is 'retried' after a Promise we await is fulfilled, the mechanism expects
+the same promise to be passed into `get.await` the second time around. Since we are creating the
+Promise inside of the read function itself, that will never be the case, and we'll be stuck in an infinite loop.
+
+```ts
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+// This atom will be stuck in an infinite loop :(
+const deferredNumberAtom = eagerAtom((get) => {
+  get.await(sleep(1000)) // Waiting for a second...
+  return 123
+})
+```
+
+For this particular use case, since we're always deferring, using an `eagerAtom` over
+a vanilla async atom is unnecessary.
+
+## soon / soonAll
+
+For more advanced usage, for example **conditional dependencies**, the `soon` and `soonAll` functions
+can be used to perform sync/async transformations on data eagerly, on a more fine-grained level.
+
+### Conditional dependency
+
+```ts
+import { soon } from 'jotai-eager'
+
+// Given the following definitions:
+//   const queryAtom: Atom<RestrictedItem | Promise<RestrictedItem>>;
+//   const isAdminAtom: Atom<boolean | Promise<boolean>>;
+
+// Atom<RestrictedItem | null | Promise<RestrictedItem | null>>
+const restrictedItemAtom = atom((get) => {
+  const isAdmin = get(isAdminAtom)
+  return soon(isAdmin, (isAdmin) => (isAdmin ? get(queryAtom) : null))
+})
+```
+
+### Conditional dependency (multiple conditions)
+
+```ts
+import { soon, soonAll } from 'jotai-eager'
+
+// Given the following definitions:
+//   const queryAtom: Atom<RestrictedItem | Promise<RestrictedItem>>;
+//   const isAdminAtom: Atom<boolean | Promise<boolean>>;
+//   const enabledAtom: Atom<boolean | Promise<boolean>>;
+
+// Atom<RestrictedItem | null | Promise<RestrictedItem | null>>
+const restrictedItemAtom = atom((get) => {
+  return soon(
+    soonAll(get(isAdminAtom), get(enabledAtom)),
+    ([isAdmin, enabled]) => (isAdmin && enabled ? get(queryAtom) : null),
+  )
+})
+```
