@@ -1,6 +1,7 @@
 packages:
   - .
   - website
+ignoreWorkspaceRootCheck: true
 minimumReleaseAgeExclude:
   - 'react'
   - 'react-dom'
