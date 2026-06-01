@@ -9,3 +9,12 @@ allowBuilds:
   esbuild: false
   unrs-resolver: false
   core-js-pure: false
+  '@parcel/watcher': false
+  core-js: false
+  es5-ext: false
+  gatsby: false
+  gatsby-cli: false
+  gatsby-telemetry: false
+  lmdb: false
+  msgpackr-extract: false
+  sharp: false
