@@ -954,7 +954,7 @@ describe('with subscribe method in string storage', () => {
       if (
         val !== null &&
         typeof val === 'object' &&
-        'n' in val &&
+        'n' in (val as Record<string, unknown>) &&
         !Array.isArray(val)
       ) {
         return new Item((val as { n: number }).n)
