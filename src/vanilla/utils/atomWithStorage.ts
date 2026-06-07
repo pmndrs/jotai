@@ -154,7 +154,7 @@ export function createJSONStorage<Value>(
       subscriber(key, (v) => {
         let newValue: Value
         try {
-          newValue = JSON.parse(v || '')
+          newValue = JSON.parse(v || '', options?.reviver)
         } catch {
           newValue = initialValue
         }
