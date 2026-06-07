@@ -1,0 +1,98 @@
+---
+title: Rolldown
+description: This doc describes the `jotai-rolldown` package.
+nav: 6.03
+keywords: rolldown,vite,fast,refresh
+---
+
+⚠️ Note: This plugin is experimental. Feedback is welcome in the [Github repo](https://github.com/jotaijs/jotai-rolldown). Please file issues in the separate repo instead of `jotai` repo.
+
+## jotaijs/jotai-rolldown
+
+This plugin improves the development experience for Jotai by adding React Refresh support and adding devtools support.
+
+### Usage
+
+Install it with:
+
+```sh
+npm install --save-dev jotai-rolldown
+```
+
+You can add the plugin to `rolldown.config.ts`:
+
+```ts
+import jotai from 'jotai-rolldown'
+import { defineConfig } from 'rolldown'
+
+export default defineConfig({
+  plugins: [jotai()],
+})
+```
+
+or you can add the plugin to `vite.config.ts`:
+
+```ts
+import jotai from 'jotai-rolldown'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  plugins: [jotai()],
+})
+```
+
+### Options
+
+#### `reactRefresh`
+
+Type: `boolean`
+Default: `true` (in development)
+
+Enables React Refresh support.
+
+This makes sure that state isn't reset, when developing using React Refresh.
+
+#### `debugLabel`
+
+Type: `boolean`
+Default: `true` (in development)
+
+Jotai is based on object references and not keys (like Recoil). This means there's no identifier for atoms. To identify atoms, it's possible to add a `debugLabel` to an atom, which can be found in React devtools.
+However, this can quickly become cumbersome to add a `debugLabel` to every atom.
+This plugin adds a `debugLabel` to every atom, based on its identifier.
+
+The plugin transforms this code:
+
+```js
+export const countAtom = atom(0)
+```
+
+Into:
+
+```js
+export const countAtom = atom(0)
+countAtom.debugLabel = 'countAtom'
+```
+
+Default exports are also handled, based on the file naming:
+
+```js
+// countAtom.ts
+export default atom(0)
+```
+
+Which transform into:
+
+```js
+// countAtom.ts
+const countAtom = atom(0)
+countAtom.debugLabel = 'countAtom'
+export default countAtom
+```
+
+#### `atomNames`
+
+Type: `string[]`
+Default: `[]`
+
+Custom atom function names so that the plugins can recognize them.
