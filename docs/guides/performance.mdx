@@ -110,3 +110,37 @@ Ask yourself whether your atom is usually going to be frequently update or more 
 Let's imagine an atom containing an object that changes almost every second, it may not be best suited to "focus" on a specific properties of this object using `focusAtom`, because anyway they will all re-render in the same time, so best adding no overhead and not create any more atoms.
 
 On the other hand, if your object has properties that rarely change, and most importantly, that change independently from the other properties, then you may want to use `focusAtom` or `selectAtom` to prevent un-necessary renders.
+
+### Dependency graph depth
+
+Jotai computes a derived atom by running its read function and synchronously reading each dependency it `get`s, which in turn reads _their_ dependencies. This recursion runs on the JavaScript call stack, so the **depth** of a dependency chain is bounded by the engine's stack size, typically a few thousand levels depending on the engine and how much work each read does.
+
+This is almost never a problem, because real graphs are _wide_ rather than _deep_: an atom usually depends on a handful of others, not on a chain thousands of atoms long. Breadth is essentially unlimited; only chain length matters.
+
+You can hit the limit by accident if you model a collection as a chain of derived atoms (each atom deriving from the previous one) instead of as data inside a single atom. Reading the end of a long enough chain throws a `RangeError: Maximum call stack size exceeded` (or `too much recursion` on Firefox). As of v2, this surfaces at the call site that triggered the read, rather than being silently swallowed, so you find out immediately instead of getting a corrupted graph.
+
+Dont's:
+
+```js
+// A linear chain: each atom depends on the previous one. Reading `last`
+// recurses once per link, so a few thousand items can overflow the stack.
+let prev = atom(0)
+for (const value of veryLongList) {
+  const node = prev
+  prev = atom((get) => get(node) + value)
+}
+const last = prev
+```
+
+Do's:
+
+```js
+// Keep the collection in one atom and derive over it in a single read.
+// The depth is constant (1) no matter how long the list is.
+const listAtom = atom(veryLongList)
+const totalAtom = atom((get) => get(listAtom).reduce((a, b) => a + b, 0))
+```
+
+For a dynamic list whose items each need to be their own atom (for example, to render and update rows independently), reach for `splitAtom` rather than chaining. It gives you one atom per item that all derive directly from the source atom, so the graph stays one level deep instead of growing with the list.
+
+If you genuinely need a deep computation, run it as a plain reduction inside a single atom's read (or in a write action) rather than spreading it across many chained atoms.
