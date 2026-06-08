@@ -447,6 +447,27 @@ it('should mount once with atom creator atom (#2314)', () => {
   expect(countAtom.onMount).toHaveBeenCalledTimes(1)
 })
 
+it('should mount sibling dependencies in read order', () => {
+  const store = createStore()
+  const mounted: string[] = []
+  const firstAtom = atom(0)
+  firstAtom.onMount = () => {
+    mounted.push('first')
+  }
+  const secondAtom = atom(0)
+  secondAtom.onMount = () => {
+    mounted.push('second')
+  }
+  const derivedAtom = atom((get) => {
+    get(firstAtom)
+    get(secondAtom)
+  })
+
+  const unsub = store.sub(derivedAtom, () => {})
+  expect(mounted).toEqual(['first', 'second'])
+  unsub()
+})
+
 it('should flush pending write triggered asynchronously and indirectly (#2451)', async () => {
   const store = createStore()
   const anAtom = atom('initial')
