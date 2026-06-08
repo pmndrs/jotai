@@ -238,10 +238,10 @@ it('should notify subscription with tree dependencies (#1956)', () => {
   store.sub(dep2Atom, vi.fn()) // this will cause the bug
   store.sub(dep3Atom, cb)
 
-  expect(cb).toBeCalledTimes(0)
+  expect(cb).toHaveBeenCalledTimes(0)
   expect(store.get(dep3Atom)).toBe(2)
   store.set(valueAtom, (c) => c + 1)
-  expect(cb).toBeCalledTimes(1)
+  expect(cb).toHaveBeenCalledTimes(1)
   expect(store.get(dep3Atom)).toBe(4)
 })
 
@@ -256,10 +256,10 @@ it('should notify subscription with tree dependencies with bail-out', () => {
   store.sub(dep1Atom, vi.fn())
   store.sub(dep3Atom, cb)
 
-  expect(cb).toBeCalledTimes(0)
+  expect(cb).toHaveBeenCalledTimes(0)
   expect(store.get(dep3Atom)).toBe(2)
   store.set(valueAtom, (c) => c + 1)
-  expect(cb).toBeCalledTimes(1)
+  expect(cb).toHaveBeenCalledTimes(1)
   expect(store.get(dep3Atom)).toBe(4)
 })
 
@@ -1045,7 +1045,7 @@ it('should call subscribers after setAtom updates atom value on mount but not on
   expect(listener).toHaveBeenCalledTimes(0)
 })
 
-it('processes deep atom a graph beyond maxDepth', () => {
+it('surfaces a stack overflow for a graph too deep to read synchronously', () => {
   function getMaxDepth() {
     let depth = 0
     function d(): number {
@@ -1068,11 +1068,11 @@ it('processes deep atom a graph beyond maxDepth', () => {
     atoms.push(a)
   })
   const lastAtom = atoms[maxDepth]!
-  // store.get(lastAtom) // FIXME: This is causing a stack overflow
-  expect(() => store.sub(lastAtom, () => {})).not.toThrow()
-  // store.get(lastAtom) // FIXME: This is causing a stack overflow
+  expect(() => store.get(lastAtom)).toThrow(/call stack|recursion/i)
+  expect(() => store.sub(lastAtom, () => {})).toThrow(/call stack|recursion/i)
   expect(() => store.set(baseAtom, 1)).not.toThrow()
-  // store.set(lastAtom) // FIXME: This is causing a stack overflow
+  atoms.forEach((a) => store.get(a))
+  expect(store.get(lastAtom)).toBe(1)
 }, 10_000)
 
 it('mounted atom should be recomputed eagerly', () => {

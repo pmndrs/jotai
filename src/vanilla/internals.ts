@@ -318,6 +318,18 @@ function isPromiseLike(p: unknown): p is PromiseLike<unknown> {
   return typeof (p as PromiseLike<unknown>)?.then === 'function'
 }
 
+function shouldThrowSynchronously(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+  const message = error.message.toLowerCase()
+  return (
+    message.includes('call stack') ||
+    message.includes('too much recursion') ||
+    message.includes('stack overflow')
+  )
+}
+
 function addPendingPromiseToDependency(
   atom: AnyAtom,
   promise: PromiseLike<AnyValue>,
@@ -809,6 +821,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
     atomState.m = storeEpochNumber
     return atomState
   } catch (error) {
+    if (shouldThrowSynchronously(error)) {
+      throw error
+    }
     delete atomState.v
     atomState.e = error
     ++atomState.n
@@ -1244,6 +1259,7 @@ export {
   isAtomStateInitialized as INTERNAL_isAtomStateInitialized,
   returnAtomValue as INTERNAL_returnAtomValue,
   isPromiseLike as INTERNAL_isPromiseLike,
+  shouldThrowSynchronously as INTERNAL_shouldThrowSynchronously,
   addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency,
   getMountedOrPendingDependents as INTERNAL_getMountedOrPendingDependents,
 }
