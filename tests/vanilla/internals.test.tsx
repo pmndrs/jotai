@@ -237,7 +237,7 @@ describe('internals', () => {
     it('surfaces a stack overflow at the call site instead of swallowing it', () => {
       const store = createStore()
       const { leaf } = makeChain(tooDeep)
-      expect(() => store.get(leaf)).toThrow(/call stack/i)
+      expect(() => store.get(leaf)).toThrow(/call stack|recursion/i)
     })
 
     it('does not poison the atom state after a stack overflow', () => {
@@ -255,13 +255,28 @@ describe('internals', () => {
 
     it('still caches a genuine error thrown by an atom read', () => {
       const store = createStore()
-      const boom = atom(() => {
+      const read = vi.fn(() => {
         throw new Error('boom')
       })
+      const boom = atom(read)
       const dependent = atom((get) => get(boom))
       expect(() => store.get(dependent)).toThrow('boom')
       // A real read error is cached, so a second read rethrows the same error.
       expect(() => store.get(dependent)).toThrow('boom')
+      expect(read).toHaveBeenCalledTimes(1)
+    })
+
+    it('still caches user errors that look like stack overflow messages', () => {
+      const store = createStore()
+      const error = new Error('Maximum call stack size exceeded')
+      const read = vi.fn(() => {
+        throw error
+      })
+      const errorAtom = atom(read)
+
+      expect(() => store.get(errorAtom)).toThrow(error)
+      expect(() => store.get(errorAtom)).toThrow(error)
+      expect(read).toHaveBeenCalledTimes(1)
     })
   })
 })

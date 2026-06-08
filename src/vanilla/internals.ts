@@ -322,11 +322,13 @@ function shouldThrowSynchronously(error: unknown): boolean {
   if (!(error instanceof Error)) {
     return false
   }
+  const name = error.name
   const message = error.message.toLowerCase()
   return (
-    message.includes('call stack') ||
-    message.includes('too much recursion') ||
-    message.includes('stack overflow')
+    (name === 'RangeError' || name === 'InternalError') &&
+    (message.includes('call stack') ||
+      message.includes('too much recursion') ||
+      message.includes('stack overflow'))
   )
 }
 
