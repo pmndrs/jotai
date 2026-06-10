@@ -134,7 +134,7 @@ const TextBox = () => {
   return (
     <>
       { isVisible && <h1>Header is visible!</h1> }
-      <button onClick={() => setIsVisible((prev) => prev ? RESET : true))}>Toggle visible</button>
+      <button onClick={() => setIsVisible((prev) => (prev ? RESET : true))}>Toggle visible</button>
     </>
   )
 }
