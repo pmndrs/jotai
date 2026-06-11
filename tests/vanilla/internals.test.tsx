@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai'
+import type { Atom } from 'jotai'
 import type {
   INTERNAL_AtomState,
   INTERNAL_AtomStateMap,
@@ -56,8 +57,8 @@ describe('internals', () => {
     buildingBlocks2[0] = mockAtomStateMap2
     const store2 = INTERNAL_buildStore(...buildingBlocks2)
     store2.get(atom(0))
-    expect(mockAtomStateMap1.get).not.toBeCalled()
-    expect(mockAtomStateMap2.get).toBeCalled()
+    expect(mockAtomStateMap1.get).not.toHaveBeenCalled()
+    expect(mockAtomStateMap2.get).toHaveBeenCalled()
   })
 
   it('should transform external building blocks differently from internal ones', () => {
@@ -90,12 +91,12 @@ describe('internals', () => {
     expect(bb0[21]).not.toBe(bb1[21])
     expect(bb1[21]).toBe(bb2[21])
     store1.get(atom(0))
-    expect(didRun.internal).toBeCalledTimes(1)
-    expect(didRun.external).toBeCalledTimes(0)
+    expect(didRun.internal).toHaveBeenCalledTimes(1)
+    expect(didRun.external).toHaveBeenCalledTimes(0)
     vi.clearAllMocks()
     store2.get(atom(0))
-    expect(didRun.internal).toBeCalledTimes(0)
-    expect(didRun.external).toBeCalledTimes(1)
+    expect(didRun.internal).toHaveBeenCalledTimes(0)
+    expect(didRun.external).toHaveBeenCalledTimes(1)
   })
 
   it('each store.get causes full scan of atom dependencies when state unchanged (performance)', () => {
@@ -220,6 +221,64 @@ describe('internals', () => {
     ).not.toThrow()
     unsub()
   })
+
+  describe('deep dependency graphs', () => {
+    function makeChain(depth: number) {
+      const base = atom(0)
+      const chain: Atom<unknown>[] = [base]
+      for (let i = 0; i < depth; i++) {
+        const parent = chain[chain.length - 1]!
+        chain.push(atom((get) => get(parent)))
+      }
+      return { base, chain, leaf: chain[chain.length - 1]! }
+    }
+    const tooDeep = measureMaxSyncRecursionDepth() * 10
+
+    it('surfaces a stack overflow at the call site instead of swallowing it', () => {
+      const store = createStore()
+      const { leaf } = makeChain(tooDeep)
+      expect(() => store.get(leaf)).toThrow(/call stack|recursion/i)
+    })
+
+    it('does not poison the atom state after a stack overflow', () => {
+      const store = createStore()
+      const { chain, leaf } = makeChain(tooDeep)
+      try {
+        store.get(leaf)
+      } catch {
+        // expected
+      }
+      // Warm the graph bottom-up so each read is shallow.
+      chain.forEach((a) => store.get(a))
+      expect(store.get(leaf)).toBe(0)
+    })
+
+    it('still caches a genuine error thrown by an atom read', () => {
+      const store = createStore()
+      const read = vi.fn(() => {
+        throw new Error('boom')
+      })
+      const boom = atom(read)
+      const dependent = atom((get) => get(boom))
+      expect(() => store.get(dependent)).toThrow('boom')
+      // A real read error is cached, so a second read rethrows the same error.
+      expect(() => store.get(dependent)).toThrow('boom')
+      expect(read).toHaveBeenCalledTimes(1)
+    })
+
+    it('still caches user errors that look like stack overflow messages', () => {
+      const store = createStore()
+      const error = new Error('Maximum call stack size exceeded')
+      const read = vi.fn(() => {
+        throw error
+      })
+      const errorAtom = atom(read)
+
+      expect(() => store.get(errorAtom)).toThrow(error)
+      expect(() => store.get(errorAtom)).toThrow(error)
+      expect(read).toHaveBeenCalledTimes(1)
+    })
+  })
 })
 
 describe('store hooks', () => {
@@ -337,4 +396,18 @@ function isBuildingBlocks(blocks: ReadonlyArray<unknown> | undefined) {
     blocks.length === buildingBlockLength &&
     isSparse(blocks) === false
   )
+}
+
+/** Deepest nested synchronous self-call before the engine throws (overflows). */
+function measureMaxSyncRecursionDepth(): number {
+  let max = 0
+  const descend = (n: number) => {
+    try {
+      descend(n + 1)
+    } catch {
+      max = n
+    }
+  }
+  descend(0)
+  return max
 }

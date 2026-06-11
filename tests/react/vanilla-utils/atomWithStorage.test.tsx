@@ -933,6 +933,95 @@ describe('with subscribe method in string storage', () => {
     expect(screen.getByText('count: 12')).toBeInTheDocument()
     // expect(storageData.count).toBe('11')
   })
+
+  it('createJSONStorage reviver is applied on subscription updates (#3101)', () => {
+    const storageData: Record<string, string> = {
+      value: JSON.stringify({ n: 42 }),
+    }
+
+    // Reviver that converts the plain object back to a class instance
+    class Item {
+      n: number
+      constructor(n: number) {
+        this.n = n
+      }
+      doubled() {
+        return this.n * 2
+      }
+    }
+
+    const reviver = (_key: string, val: unknown) => {
+      if (
+        val !== null &&
+        typeof val === 'object' &&
+        'n' in (val as Record<string, unknown>) &&
+        !Array.isArray(val)
+      ) {
+        return new Item((val as { n: number }).n)
+      }
+      return val
+    }
+
+    const stringStorage = {
+      getItem: (key: string) => storageData[key] || null,
+      setItem: (key: string, newValue: string) => {
+        storageData[key] = newValue
+      },
+      removeItem: (key: string) => {
+        delete storageData[key]
+      },
+      subscribe(_key: string, callback: (value: string | null) => void) {
+        function handler(event: CustomEvent<string>) {
+          callback(event.detail)
+        }
+
+        window.addEventListener('revivertestchange', handler as EventListener)
+        return () =>
+          window.removeEventListener(
+            'revivertestchange',
+            handler as EventListener,
+          )
+      },
+    } as SyncStringStorage
+
+    const dummyStorage = createJSONStorage<Item>(() => stringStorage, {
+      reviver,
+    })
+
+    const store = createStore()
+    const valueAtom = atomWithStorage('value', new Item(0), dummyStorage)
+
+    const Component = () => {
+      const [value] = useAtom(valueAtom, { store })
+      return (
+        <div>
+          doubled: {value instanceof Item ? value.doubled() : 'NOT_ITEM'}
+        </div>
+      )
+    }
+
+    render(
+      <StrictMode>
+        <Component />
+      </StrictMode>,
+    )
+
+    // Initial value is read via getItem — reviver is applied correctly here
+    expect(screen.getByText('doubled: 84')).toBeInTheDocument()
+
+    // Simulate an external storage update (e.g. from another tab)
+    storageData.value = JSON.stringify({ n: 10 })
+    fireEvent(
+      window,
+      new CustomEvent('revivertestchange', {
+        detail: JSON.stringify({ n: 10 }),
+      }),
+    )
+
+    // Without the fix the reviver is not applied, value is a plain object,
+    // and doubled() would not exist — the component would render 'NOT_ITEM'.
+    expect(screen.getByText('doubled: 20')).toBeInTheDocument()
+  })
 })
 
 describe('with custom async storage', () => {
