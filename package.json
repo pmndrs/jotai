@@ -77,8 +77,8 @@
   "scripts": {
     "build": "shx rm -rf dist && tsc -p tsconfig.build.json --noCheck && shx touch dist/ts_version_5.5_and_above_is_required.d.ts",
     "build-watch": "tsc -p tsconfig.build.json --noCheck --watch",
-    "prepack": "cp README.md .README.md.bak && shx sed -i 's/.*Jotai \\(dark mode\\).*//' README.md",
-    "postpack": "mv .README.md.bak README.md",
+    "prepack": "shx cp README.md .README.md.bak && shx sed -i 's/.*Jotai \\(dark mode\\).*//' README.md",
+    "postpack": "shx mv .README.md.bak README.md",
     "fix": "pnpm run fix:lint && pnpm run fix:format",
     "fix:format": "prettier . --write",
     "fix:lint": "eslint . --fix",

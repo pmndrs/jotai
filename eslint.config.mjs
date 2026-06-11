@@ -94,7 +94,6 @@ export default defineConfig(
   {
     files: ['tests/**/*.{ts,tsx}'],
     rules: {
-      'import/extensions': ['error', 'never'],
       'vitest/consistent-test-it': [
         'error',
         { fn: 'it', withinDescribe: 'it' },

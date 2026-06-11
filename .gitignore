@@ -29,6 +29,7 @@ yarn-error.log*
 # misc
 .DS_Store
 .idea
+.README.md.bak
 
 # examples
 examples/**/*/package-lock.json
