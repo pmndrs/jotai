@@ -13,13 +13,17 @@ In your `vite.config.ts`:
 ```js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import babel from '@rolldown/plugin-babel'
 import jotaiDebugLabel from 'jotai-babel/plugin-debug-label'
 import jotaiReactRefresh from 'jotai-babel/plugin-react-refresh'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react({ babel: { plugins: [jotaiDebugLabel, jotaiReactRefresh] } }),
+    react(),
+    babel({
+      plugins: [jotaiDebugLabel, jotaiReactRefresh],
+    }),
   ],
   // ... The rest of your configuration
 })
