@@ -17,9 +17,6 @@ importers:
       '@babel/plugin-transform-typescript':
         specifier: ^7.29.7
         version: 7.29.7(@babel/core@7.29.7)
-      '@babel/preset-env':
-        specifier: ^7.29.7
-        version: 7.29.7(@babel/core@7.29.7)
       '@babel/template':
         specifier: ^7.29.7
         version: 7.29.7
@@ -29,9 +26,6 @@ importers:
       '@rollup/plugin-alias':
         specifier: ^6.0.0
         version: 6.0.0(rollup@4.61.1)
-      '@rollup/plugin-babel':
-        specifier: ^7.1.0
-        version: 7.1.0(@babel/core@7.29.7)(@types/babel__core@7.20.5)(rollup@4.61.1)
       '@rollup/plugin-node-resolve':
         specifier: ^16.0.3
         version: 16.0.3(rollup@4.61.1)
@@ -2011,19 +2005,6 @@ packages:
     peerDependencies:
       rollup: '>=4.0.0'
     peerDependenciesMeta:
-      rollup:
-        optional: true
-
-  '@rollup/plugin-babel@7.1.0':
-    resolution: {integrity: sha512-h9Y+xYha6p4wKO+FwdiPIkE+eIYCm8MzZPpX1iARIoFBnmKP9CnpT1p9dDf/DTFm6fyN8PmuLyRI5qZgchnitw==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0
-      '@types/babel__core': ^7.1.9
-      rollup: ^2.0.0||^3.0.0||^4.0.0
-    peerDependenciesMeta:
-      '@types/babel__core':
-        optional: true
       rollup:
         optional: true
 
@@ -8563,9 +8544,6 @@ packages:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
 
-  workerpool@9.3.4:
-    resolution: {integrity: sha512-TmPRQYYSAnnDiEB0P/Ytip7bFGvqnSU6I2BcuSw7Hx+JSg/DsUi5ebYfc8GYaSdpuvOcEs6dXxPurOYpe9QFwg==}
-
   wrap-ansi@6.2.0:
     resolution: {integrity: sha512-r6lPcBGxZXlIcymEu7InxDMhdW0KDxpLgoFLcguasxCaJ/SOIZwINatK9KY/tf+ZrlywOKU0UDj3ATXUBfxJXA==}
     engines: {node: '>=8'}
@@ -10749,18 +10727,6 @@ snapshots:
   '@rollup/plugin-alias@6.0.0(rollup@4.61.1)':
     optionalDependencies:
       rollup: 4.61.1
-
-  '@rollup/plugin-babel@7.1.0(@babel/core@7.29.7)(@types/babel__core@7.20.5)(rollup@4.61.1)':
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-module-imports': 7.29.7
-      '@rollup/pluginutils': 5.4.0(rollup@4.61.1)
-      workerpool: 9.3.4
-    optionalDependencies:
-      '@types/babel__core': 7.20.5
-      rollup: 4.61.1
-    transitivePeerDependencies:
-      - supports-color
 
   '@rollup/plugin-node-resolve@16.0.3(rollup@4.61.1)':
     dependencies:
@@ -18551,8 +18517,6 @@ snapshots:
   wonka@6.3.6: {}
 
   word-wrap@1.2.5: {}
-
-  workerpool@9.3.4: {}
 
   wrap-ansi@6.2.0:
     dependencies:

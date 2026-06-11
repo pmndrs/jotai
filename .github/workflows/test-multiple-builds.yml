@@ -15,7 +15,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [cjs, esm]
         env: [development, production]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -42,21 +41,13 @@ jobs:
         run: |
           sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\PRD-ONLY\]/\1('/" tests/*/*.ts* tests/*/*/*.ts*
           sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\[DEV-ONLY\]/\1.skip('/" tests/*/*.ts* tests/*/*/*.ts*
-      - name: Patch for CJS
-        if: ${{ matrix.build == 'cjs' }}
-        run: |
-          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.cjs')/" vitest.config.mts
-          sed -i~ "s/import { useResetAtom } from 'jotai\/react\/utils'/const { useResetAtom } = require('..\/..\/..\/dist\/react\/utils.cjs')/" tests/react/utils/useResetAtom.test.tsx
-          sed -i~ "s/import { RESET, atomWithReducer, atomWithReset } from 'jotai\/vanilla\/utils'/const { RESET, atomWithReducer, atomWithReset } = require('..\/..\/..\/dist\/vanilla\/utils.cjs')/" tests/react/utils/useResetAtom.test.tsx
-          perl -i~ -0777 -pe "s/import {[^}]+} from 'jotai\/vanilla\/internals'/const { INTERNAL_buildStoreRev3: INTERNAL_buildStore, INTERNAL_initializeStoreHooksRev3: INTERNAL_initializeStoreHooks, INTERNAL_getBuildingBlocksRev3: INTERNAL_getBuildingBlocks } = require('..\/..\/dist\/vanilla\/internals.cjs')/g" tests/vanilla/store.test.tsx tests/vanilla/internals.test.tsx tests/vanilla/derive.test.tsx tests/vanilla/effect.test.ts
       - name: Patch for ESM
-        if: ${{ matrix.build == 'esm' }}
         run: |
-          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/esm\1.js')/" vitest.config.mts
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.mts
           sed -i~ "1s/^/import.meta.env.MODE='${NODE_ENV}';/" tests/*/*.tsx tests/*/*/*.tsx
         env:
           NODE_ENV: ${{ matrix.env }}
-      - name: Test ${{ matrix.build }} ${{ matrix.env }}
+      - name: Test ESM ${{ matrix.env }}
         run: |
           pnpm run test:spec
         env:
