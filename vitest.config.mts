@@ -13,10 +13,10 @@ export default defineConfig({
   plugins: [
     react({
       babel: {
-        plugins: existsSync('./dist/babel/plugin-debug-label.js')
+        plugins: existsSync('./dist/babel/plugin-debug-label.cjs')
           ? [
               // FIXME Can we read from ./src instead of ./dist?
-              './dist/babel/plugin-debug-label.js',
+              './dist/babel/plugin-debug-label.cjs',
             ]
           : [],
       },
