@@ -1,6 +1,6 @@
-import { atom } from '../../vanilla.ts'
-import type { WritableAtom } from '../../vanilla.ts'
-import { RESET } from './constants.ts'
+import { atom } from '../../vanilla.js'
+import type { WritableAtom } from '../../vanilla.js'
+import { RESET } from './constants.js'
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
   typeof (x as PromiseLike<unknown>)?.then === 'function'

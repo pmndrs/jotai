@@ -1,7 +1,9 @@
+'use client'
+
 import React, { useDebugValue, useEffect, useReducer } from 'react'
-import { INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks } from '../vanilla/internals.ts'
-import type { Atom, ExtractAtomValue } from '../vanilla.ts'
-import { useStore } from './Provider.ts'
+import { INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks } from '../vanilla/internals.js'
+import type { Atom, ExtractAtomValue } from '../vanilla.js'
+import { useStore } from './Provider.js'
 
 type Store = ReturnType<typeof useStore>
 

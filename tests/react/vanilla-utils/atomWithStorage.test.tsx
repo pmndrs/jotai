@@ -21,7 +21,7 @@ import {
   createJSONStorage,
   unstable_withStorageValidator as withStorageValidator,
 } from 'jotai/vanilla/utils'
-import type { SyncStringStorage } from 'jotai/vanilla/utils/atomWithStorage'
+import type { SyncStringStorage } from '../../../src/vanilla/utils/atomWithStorage'
 import { sleep } from '../../test-utils'
 
 beforeEach(() => {

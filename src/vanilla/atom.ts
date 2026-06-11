@@ -1,4 +1,4 @@
-import type { Store } from './store'
+import type { Store } from './store.js'
 
 type Getter = <Value>(atom: Atom<Value>) => Value
 

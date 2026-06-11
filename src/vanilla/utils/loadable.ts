@@ -1,6 +1,6 @@
-import { atom } from '../../vanilla.ts'
-import type { Atom } from '../../vanilla.ts'
-import { unwrap } from './unwrap.ts'
+import { atom } from '../../vanilla.js'
+import type { Atom } from '../../vanilla.js'
+import { unwrap } from './unwrap.js'
 
 const cache1 = new WeakMap()
 const memo1 = <T>(create: () => T, dep1: object): T =>

@@ -1,4 +1,4 @@
-import type { Atom, PrimitiveAtom, WritableAtom } from './atom.ts'
+import type { Atom, PrimitiveAtom, WritableAtom } from './atom.js'
 
 export type Getter = Parameters<Atom<unknown>['read']>[0]
 export type Setter = Parameters<

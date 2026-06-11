@@ -44,7 +44,7 @@ export default defineConfig(
       'import/namespace': 'off',
       'import/no-named-as-default-member': 'off',
       'import/no-duplicates': 'error',
-      'import/extensions': ['error', 'always', { ignorePackages: true }],
+      'import/extensions': 'off',
       'import/order': [
         'error',
         {

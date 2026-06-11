@@ -1,8 +1,8 @@
 import babel from '@babel/core'
 import type { PluginObj } from '@babel/core'
 import _templateBuilder from '@babel/template'
-import { isAtom } from './utils.ts'
-import type { PluginOptions } from './utils.ts'
+import { isAtom } from './utils.js'
+import type { PluginOptions } from './utils.js'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const templateBuilder = (_templateBuilder as any).default || _templateBuilder

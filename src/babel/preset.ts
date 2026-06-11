@@ -1,7 +1,7 @@
 import babel from '@babel/core'
-import pluginDebugLabel from './plugin-debug-label.ts'
-import pluginReactRefresh from './plugin-react-refresh.ts'
-import type { PluginOptions } from './utils.ts'
+import pluginDebugLabel from './plugin-debug-label.js'
+import pluginReactRefresh from './plugin-react-refresh.js'
+import type { PluginOptions } from './utils.js'
 
 /** @deprecated Use `jotai-babel/preset` instead. */
 export default function jotaiPreset(

@@ -1,5 +1,5 @@
-import { atom } from '../../vanilla.ts'
-import type { PrimitiveAtom } from '../../vanilla.ts'
+import { atom } from '../../vanilla.js'
+import type { PrimitiveAtom } from '../../vanilla.js'
 
 export function atomWithLazy<Value>(
   makeInitial: () => Value,

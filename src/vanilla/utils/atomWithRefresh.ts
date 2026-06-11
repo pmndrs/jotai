@@ -1,5 +1,5 @@
-import { atom } from '../../vanilla.ts'
-import type { WritableAtom } from '../../vanilla.ts'
+import { atom } from '../../vanilla.js'
+import type { WritableAtom } from '../../vanilla.js'
 
 type Read<Value, Args extends unknown[], Result> = WritableAtom<
   Value,

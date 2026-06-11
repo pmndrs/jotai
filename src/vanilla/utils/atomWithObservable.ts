@@ -1,5 +1,11 @@
-import { atom } from '../../vanilla.ts'
-import type { Atom, Getter, WritableAtom } from '../../vanilla.ts'
+import { atom } from '../../vanilla.js'
+import type { Atom, Getter, WritableAtom } from '../../vanilla.js'
+
+declare global {
+  interface SymbolConstructor {
+    readonly observable: symbol
+  }
+}
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
   typeof (x as PromiseLike<unknown>)?.then === 'function'

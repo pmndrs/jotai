@@ -1,6 +1,8 @@
+'use client'
+
 import { useCallback } from 'react'
-import { useAtom } from '../../react.ts'
-import type { PrimitiveAtom } from '../../vanilla.ts'
+import { useAtom } from '../../react.js'
+import type { PrimitiveAtom } from '../../vanilla.js'
 
 type Options = Parameters<typeof useAtom>[1]
 

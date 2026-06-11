@@ -1,4 +1,4 @@
-import { type Atom } from '../../vanilla.ts'
+import { type Atom } from '../../vanilla.js'
 
 /**
  * in milliseconds

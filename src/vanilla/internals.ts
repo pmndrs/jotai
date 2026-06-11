@@ -1,8 +1,8 @@
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
-import type { Atom, WritableAtom } from './atom.ts'
-import type { ExtractAtomArgs, ExtractAtomResult } from './typeUtils.ts'
+import type { Atom, WritableAtom } from './atom.js'
+import type { ExtractAtomArgs, ExtractAtomResult } from './typeUtils.js'
 
 type AnyValue = unknown
 type AnyError = unknown
