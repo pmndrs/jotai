@@ -5,7 +5,7 @@ import { useAtom, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { SetStateAction, WritableAtom } from 'jotai/vanilla'
 import { atomFamily } from 'jotai/vanilla/utils'
-import { sleep } from '../../test-utils'
+import { sleep } from '../../test-utils.js'
 
 beforeEach(() => {
   vi.useFakeTimers()

@@ -5,7 +5,7 @@ import { useAtom, useAtomValue } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
 import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai/vanilla'
 import { atom } from 'jotai/vanilla'
-import { useCommitCount } from '../../test-utils'
+import { useCommitCount } from '../../test-utils.js'
 
 it('useHydrateAtoms should only hydrate on first render', () => {
   const countAtom = atom(0)

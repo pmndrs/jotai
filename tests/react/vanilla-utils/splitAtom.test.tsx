@@ -5,7 +5,7 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Atom, PrimitiveAtom } from 'jotai/vanilla'
 import { splitAtom } from 'jotai/vanilla/utils'
-import { useCommitCount } from '../../test-utils'
+import { useCommitCount } from '../../test-utils.js'
 
 type TodoItem = { task: string; checked?: boolean }
 

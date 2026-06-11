@@ -21,8 +21,8 @@ import {
   createJSONStorage,
   unstable_withStorageValidator as withStorageValidator,
 } from 'jotai/vanilla/utils'
-import type { SyncStringStorage } from '../../../src/vanilla/utils/atomWithStorage'
-import { sleep } from '../../test-utils'
+import type { SyncStringStorage } from '../../../src/vanilla/utils/atomWithStorage.js'
+import { sleep } from '../../test-utils.js'
 
 beforeEach(() => {
   vi.useFakeTimers()

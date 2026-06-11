@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import { unwrap } from 'jotai/vanilla/utils'
-import { sleep } from '../../test-utils'
+import { sleep } from '../../test-utils.js'
 
 let savedConsoleWarn: typeof console.warn
 

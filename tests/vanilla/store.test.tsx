@@ -7,7 +7,7 @@ import {
   INTERNAL_initializeStoreHooksRev3 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 import type { INTERNAL_Store } from 'jotai/vanilla/internals'
-import { sleep } from '../test-utils'
+import { sleep } from '../test-utils.js'
 
 let savedConsoleWarn: typeof console.warn
 

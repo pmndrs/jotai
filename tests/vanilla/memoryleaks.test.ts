@@ -1,7 +1,13 @@
-import LeakDetector from 'jest-leak-detector'
+import LeakDetectorModule from 'jest-leak-detector'
 import { describe, expect, it } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
+
+const LeakDetector = (
+  'default' in LeakDetectorModule
+    ? LeakDetectorModule.default
+    : LeakDetectorModule
+) as typeof import('jest-leak-detector').default
 
 describe('memory leaks (get & set only)', () => {
   it('one atom', async () => {
