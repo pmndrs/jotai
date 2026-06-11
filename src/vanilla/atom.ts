@@ -106,7 +106,7 @@ export function atom<Value, Args extends unknown[], Result>(
   const key = `atom${++keyCount}`
   const config = {
     toString() {
-      return import.meta.env?.MODE !== 'production' && this.debugLabel
+      return process.env.NODE_ENV !== 'production' && this.debugLabel
         ? key + ':' + this.debugLabel
         : key
     },

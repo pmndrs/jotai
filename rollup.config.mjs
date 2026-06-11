@@ -2,7 +2,6 @@
 import path from 'path'
 import alias from '@rollup/plugin-alias'
 import resolve from '@rollup/plugin-node-resolve'
-import replace from '@rollup/plugin-replace'
 import typescript from '@rollup/plugin-typescript'
 import banner2 from 'rollup-plugin-banner2'
 import esbuild from 'rollup-plugin-esbuild'
@@ -57,12 +56,6 @@ function createESMConfig(input, output, clientOnly) {
     plugins: [
       alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
-      replace({
-        'import.meta.env?.MODE':
-          '(import.meta.env ? import.meta.env.MODE : undefined)',
-        delimiters: ['\\b', '\\b(?!(\\.|/))'],
-        preventAssignment: true,
-      }),
       getEsbuild(),
       banner2(() => clientOnly && cscComment),
     ],

@@ -136,7 +136,7 @@ export function atomWithObservable<Data>(
 
     const resultAtom = atom(lastResult || initialResult)
 
-    if (import.meta.env?.MODE !== 'production') {
+    if (process.env.NODE_ENV !== 'production') {
       resultAtom.debugPrivate = true
     }
 
@@ -162,7 +162,7 @@ export function atomWithObservable<Data>(
     return [resultAtom, observable, makePending, start, isNotMounted] as const
   })
 
-  if (import.meta.env?.MODE !== 'production') {
+  if (process.env.NODE_ENV !== 'production') {
     observableResultAtom.debugPrivate = true
   }
 

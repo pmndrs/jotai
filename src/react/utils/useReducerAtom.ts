@@ -29,7 +29,7 @@ export function useReducerAtom<Value, Action>(
   reducer: (v: Value, a: Action) => Value,
   options?: Options,
 ) {
-  if (import.meta.env?.MODE !== 'production') {
+  if (process.env.NODE_ENV !== 'production') {
     console.warn(
       '[DEPRECATED] useReducerAtom is deprecated and will be removed in the future. Please create your own version using the recipe. https://github.com/pmndrs/jotai/pull/2467',
     )

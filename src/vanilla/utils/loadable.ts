@@ -36,7 +36,7 @@ let didWarnDeprecation = false
  * ```
  */
 export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
-  if (import.meta.env?.MODE !== 'production' && !didWarnDeprecation) {
+  if (process.env.NODE_ENV !== 'production' && !didWarnDeprecation) {
     console.warn(
       '[DEPRECATED] loadable is deprecated and will be removed in v3. ' +
         'Please use a userland util with the `unwrap` util: https://github.com/pmndrs/jotai/pull/3217',
