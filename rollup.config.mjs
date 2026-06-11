@@ -69,14 +69,8 @@ function createESMConfig(input, output, clientOnly) {
       alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
-        ...(output.endsWith('.js')
-          ? {
-              'import.meta.env?.MODE': 'process.env.NODE_ENV',
-            }
-          : {
-              'import.meta.env?.MODE':
-                '(import.meta.env ? import.meta.env.MODE : undefined)',
-            }),
+        'import.meta.env?.MODE':
+          '(import.meta.env ? import.meta.env.MODE : undefined)',
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
@@ -89,7 +83,7 @@ function createESMConfig(input, output, clientOnly) {
 function createCommonJSConfig(input, output, clientOnly) {
   return {
     input,
-    output: { file: `${output}.js`, format: 'cjs' },
+    output: { file: `${output}.cjs`, format: 'cjs' },
     external,
     plugins: [
       alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
@@ -116,6 +110,6 @@ export default function (args) {
   return [
     ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
     createCommonJSConfig(`src/${c}.ts`, `dist/${c}`, clientOnly),
-    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`, clientOnly),
+    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.js`, clientOnly),
   ]
 }
