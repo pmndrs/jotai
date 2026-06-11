@@ -4,21 +4,15 @@
   "private": true,
   "type": "module",
   "version": "2.20.1",
-  "main": "./index.cjs",
-  "types": "./index.d.cts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "typesVersions": {
     ">=5.5": {
-      "esm/*": [
-        "esm/*"
-      ],
       "*": [
         "*"
       ]
     },
     "*": {
-      "esm/*": [
-        "ts_version_5.5_and_above_is_required.d.ts"
-      ],
       "*": [
         "ts_version_5.5_and_above_is_required.d.ts"
       ]
@@ -27,38 +21,14 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "react-native": {
-        "types@>=5.5": "./index.d.cts",
-        "types": "./ts_version_5.5_and_above_is_required.d.ts",
-        "default": "./index.cjs"
-      },
-      "import": {
-        "types@>=5.5": "./esm/index.d.ts",
-        "types": "./ts_version_5.5_and_above_is_required.d.ts",
-        "default": "./esm/index.js"
-      },
-      "default": {
-        "types@>=5.5": "./index.d.cts",
-        "types": "./ts_version_5.5_and_above_is_required.d.ts",
-        "default": "./index.cjs"
-      }
+      "types@>=5.5": "./index.d.ts",
+      "types": "./ts_version_5.5_and_above_is_required.d.ts",
+      "default": "./index.js"
     },
     "./*": {
-      "react-native": {
-        "types@>=5.5": "./*.d.cts",
-        "types": "./ts_version_5.5_and_above_is_required.d.ts",
-        "default": "./*.cjs"
-      },
-      "import": {
-        "types@>=5.5": "./esm/*.d.ts",
-        "types": "./ts_version_5.5_and_above_is_required.d.ts",
-        "default": "./esm/*.js"
-      },
-      "default": {
-        "types@>=5.5": "./*.d.cts",
-        "types": "./ts_version_5.5_and_above_is_required.d.ts",
-        "default": "./*.cjs"
-      }
+      "types@>=5.5": "./*.d.ts",
+      "types": "./ts_version_5.5_and_above_is_required.d.ts",
+      "default": "./*.js"
     }
   },
   "files": [
@@ -79,7 +49,7 @@
     "build:vanilla:internals": "rollup -c --config-vanilla_internals",
     "build:react": "rollup -c --config-react --client-only",
     "build:react:utils": "rollup -c --config-react_utils --client-only",
-    "postbuild": "pnpm run patch-d-ts && pnpm run copy && pnpm run patch-old-ts && pnpm run patch-esm-ts && pnpm run patch-cjs-ts && pnpm run patch-readme",
+    "postbuild": "pnpm run patch-d-ts && pnpm run copy && pnpm run patch-old-ts && pnpm run patch-esm-ts && pnpm run patch-readme",
     "fix": "pnpm run fix:lint && pnpm run fix:format",
     "fix:format": "prettier . --write",
     "fix:lint": "eslint . --fix",
@@ -90,10 +60,9 @@
     "test:lint": "eslint .",
     "test:spec": "vitest run",
     "patch-d-ts": "node --input-type=module -e \"import { entries } from './rollup.config.mjs'; import shelljs from 'shelljs'; const { find, sed } = shelljs; find('dist/**/*.d.ts').forEach(f => { entries.forEach(({ find, replacement }) => { sed('-i', new RegExp(' from \\'' + find.source.slice(0, -1) + '\\';$'), ' from \\'' + replacement + '\\';', f); }); sed('-i', / from '(\\.[^']+)\\.ts';$/, ' from \\'\\$1\\';', f); });\"",
-    "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -f dist/index.js && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && shx cp package.json README.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined;\"",
+    "copy": "shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && shx cp package.json README.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined;\"",
     "patch-old-ts": "shx touch dist/ts_version_5.5_and_above_is_required.d.ts",
-    "patch-esm-ts": "node -e \"require('shelljs').find('dist/esm/**/*.d.ts').forEach(f=>{require('shelljs').sed('-i',/ from '(\\.[^']+)';$/,' from \\'\\$1.js\\';',f);require('shelljs').sed('-i',/^declare module '(\\.[^']+)'/,'declare module \\'\\$1.js\\'',f)})\"",
-    "patch-cjs-ts": "node -e \"require('shelljs').find('dist/**/*.d.ts').filter(f=>!f.startsWith('dist/esm/')&&!f.endsWith('ts_version_5.5_and_above_is_required.d.ts')).forEach(f=>{var f2=f.replace(/\\.d\\.ts$/,'.d.cts');require('fs').renameSync(f,f2);require('shelljs').sed('-i',/ from '(\\.[^']+)';$/,' from \\'\\$1.cjs\\';',f2);require('shelljs').sed('-i',/^declare module '(\\.[^']+)'/,'declare module \\'\\$1.cjs\\'',f2)})\"",
+    "patch-esm-ts": "node -e \"require('shelljs').find('dist/**/*.d.ts').filter(f=>!f.endsWith('ts_version_5.5_and_above_is_required.d.ts')).forEach(f=>{require('shelljs').sed('-i',/ from '(\\.[^']+)';$/,' from \\'\\$1.js\\';',f);require('shelljs').sed('-i',/^declare module '(\\.[^']+)'/,'declare module \\'\\$1.js\\'',f)})\"",
     "patch-readme": "shx sed -i 's/.*Jotai \\(dark mode\\).*//' dist/README.md"
   },
   "engines": {
@@ -126,11 +95,9 @@
     "@babel/core": "^7.29.7",
     "@babel/plugin-transform-react-jsx": "^7.29.7",
     "@babel/plugin-transform-typescript": "^7.29.7",
-    "@babel/preset-env": "^7.29.7",
     "@babel/template": "^7.29.7",
     "@eslint/js": "9.39.4",
     "@rollup/plugin-alias": "^6.0.0",
-    "@rollup/plugin-babel": "^7.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-replace": "^6.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
