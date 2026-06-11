@@ -65,7 +65,7 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
   initializeAtom: (param: Param) => AtomType,
   areEqual?: (a: Param, b: Param) => boolean,
 ) {
-  if (import.meta.env?.MODE !== 'production' && !didWarnDeprecation) {
+  if (process.env.NODE_ENV !== 'production' && !didWarnDeprecation) {
     console.warn(
       '[DEPRECATED] atomFamily is deprecated and will be removed in v3. ' +
         'Please use the `jotai-family` package instead: https://github.com/jotaijs/jotai-family',

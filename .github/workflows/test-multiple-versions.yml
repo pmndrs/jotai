@@ -50,7 +50,7 @@ jobs:
         run: |
           sed -i~ '1s/^/import React from "react";/' tests/*/*.tsx tests/*/*/*.tsx
           sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' tsconfig.json
-          sed -i~ 's/import\.meta\.env[?]\.MODE/"DEVELOPMENT".toLowerCase()/' src/*.ts src/*/*.ts src/*/*/*.ts
+          sed -i~ 's/process\.env\.NODE_ENV/"DEVELOPMENT".toLowerCase()/' src/*.ts src/*/*.ts src/*/*/*.ts
       - name: Test Build # we need to build for babel tests
         run: pnpm run build
       - name: Test ${{ matrix.react }}

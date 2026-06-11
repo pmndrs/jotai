@@ -56,7 +56,7 @@ export function freezeAtom(
 export function freezeAtomCreator<
   CreateAtom extends (...args: unknown[]) => Atom<unknown>,
 >(createAtom: CreateAtom): CreateAtom {
-  if (import.meta.env?.MODE !== 'production') {
+  if (process.env.NODE_ENV !== 'production') {
     console.warn(
       '[DEPRECATED] freezeAtomCreator is deprecated, define it on users end',
     )

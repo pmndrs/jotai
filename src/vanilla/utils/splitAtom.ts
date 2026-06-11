@@ -143,7 +143,7 @@ export function splitAtom<Item, Key>(
         return mapping
       })
 
-      if (import.meta.env?.MODE !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
         mappingAtom.debugPrivate = true
       }
 

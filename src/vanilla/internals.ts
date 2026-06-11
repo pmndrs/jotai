@@ -308,7 +308,7 @@ function returnAtomValue<Value>(atomState: AtomState<Value>): Value {
   if ('e' in atomState) {
     throw atomState.e
   }
-  if (import.meta.env?.MODE !== 'production' && !('v' in atomState)) {
+  if (process.env.NODE_ENV !== 'production' && !('v' in atomState)) {
     throw new Error('[Bug] atom state is not initialized')
   }
   return atomState.v!
@@ -605,7 +605,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
         sortedReversedAtoms.push(a)
         sortedReversedStates.push(aState)
       } else if (
-        import.meta.env?.MODE !== 'production' &&
+        process.env.NODE_ENV !== 'production' &&
         invalidatedAtoms.has(a)
       ) {
         throw new Error('[Bug] invalidated atom exists')
@@ -758,21 +758,21 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
       return controller.signal
     },
     get setSelf() {
-      if (import.meta.env?.MODE !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
         // This is shown even before calling. It's a strong warning.
         console.warn(
           '[DEPRECATED] setSelf is deprecated and will be removed in v3.',
         )
       }
       if (
-        import.meta.env?.MODE !== 'production' &&
+        process.env.NODE_ENV !== 'production' &&
         !isActuallyWritableAtom(atom)
       ) {
         console.warn('setSelf function cannot be used with read-only atom')
       }
       if (!setSelf && isActuallyWritableAtom(atom)) {
         setSelf = (...args) => {
-          if (import.meta.env?.MODE !== 'production' && isSync) {
+          if (process.env.NODE_ENV !== 'production' && isSync) {
             console.warn('setSelf function cannot be called in sync')
           }
           if (!isSync) {
@@ -791,7 +791,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
   const prevEpochNumber = atomState.n
   const prevInvalidated = invalidatedAtoms.get(atom) === prevEpochNumber
   try {
-    if (import.meta.env?.MODE !== 'production') {
+    if (process.env.NODE_ENV !== 'production') {
       storeMutationSet.delete(store)
     }
     const valueOrPromise = atomRead(
@@ -801,7 +801,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
       getter,
       options as never,
     )
-    if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {
+    if (process.env.NODE_ENV !== 'production' && storeMutationSet.has(store)) {
       console.warn(
         'Detected store mutation during atom read. This is not supported.',
       )
@@ -895,7 +895,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
-        if (import.meta.env?.MODE !== 'production') {
+        if (process.env.NODE_ENV !== 'production') {
           storeMutationSet.add(store)
         }
         const prevEpochNumber = aState.n
@@ -1175,7 +1175,7 @@ const buildingBlockMap = new WeakMap<Store, Readonly<BuildingBlocks>>()
 
 function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
   const buildingBlocks = buildingBlockMap.get(store)!
-  if (import.meta.env?.MODE !== 'production' && !buildingBlocks) {
+  if (process.env.NODE_ENV !== 'production' && !buildingBlocks) {
     throw new Error(
       'Store must be created by buildStore to read its building blocks',
     )

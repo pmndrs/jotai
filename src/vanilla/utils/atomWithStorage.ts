@@ -107,7 +107,7 @@ export function createJSONStorage<Value>(
     try {
       return window.localStorage
     } catch (e) {
-      if (import.meta.env?.MODE !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
         if (typeof window !== 'undefined') {
           console.warn(e)
         }
@@ -230,7 +230,7 @@ export function atomWithStorage<Value>(
       : initialValue,
   )
 
-  if (import.meta.env?.MODE !== 'production') {
+  if (process.env.NODE_ENV !== 'production') {
     baseAtom.debugPrivate = true
   }
 

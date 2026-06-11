@@ -55,7 +55,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
         ])
       }
 
-      if (import.meta.env?.MODE !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
         refreshAtom.debugPrivate = true
         triggerRefreshAtom.debugPrivate = true
       }
@@ -105,7 +105,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
       // HACK to read PromiseAndValue atom before initialization
       promiseAndValueAtom.init = undefined
 
-      if (import.meta.env?.MODE !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
         promiseAndValueAtom.debugPrivate = true
       }
 

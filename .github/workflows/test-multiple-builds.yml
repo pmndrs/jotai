@@ -44,7 +44,6 @@ jobs:
       - name: Patch for ESM
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.mts
-          sed -i~ "1s/^/import.meta.env.MODE='${NODE_ENV}';/" tests/*/*.tsx tests/*/*/*.tsx
         env:
           NODE_ENV: ${{ matrix.env }}
       - name: Test ESM ${{ matrix.env }}
