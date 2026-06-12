@@ -393,11 +393,11 @@ it('resolves dependencies reliably after a delay (#2192)', async () => {
     return count
   })
   const derivedAtom = atom(
-    async (get, { setSelf }) => {
+    async (get) => {
       get(countAtom)
       await sleep(50)
       result = await get(asyncAtom)
-      if (result === 2) setSelf() // <-- necessary
+      if (result === 2) store.set(derivedAtom) // <-- necessary
     },
     () => {},
   )
@@ -766,39 +766,6 @@ describe('should mount and trigger listeners even when an error is thrown', () =
     await vi.advanceTimersByTimeAsync(0)
     expect(a.onMount).toHaveBeenCalledOnce()
     expect(e.onMount).toHaveBeenCalledOnce()
-  })
-
-  it('in read setSelf', async () => {
-    const store = createStore()
-    const a = atom(0)
-    const e = atom(
-      () => {
-        throw new Error('error')
-      },
-      () => {},
-    )
-    const b = atom(
-      (_, { setSelf }) => {
-        setTimeout(() => {
-          try {
-            setSelf()
-          } catch {
-            // expect error
-          }
-        })
-      },
-      (get, set) => {
-        set(a, 1)
-        get(e)
-      },
-    )
-    const listener = vi.fn()
-
-    store.sub(a, listener)
-    store.sub(b, () => {})
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(listener).toHaveBeenCalledOnce()
   })
 
   it('in read promise on settled', async () => {
