@@ -1,4 +1,6 @@
-export { useResetAtom } from './utils/useResetAtom.ts'
-export { useReducerAtom } from './utils/useReducerAtom.ts'
-export { useAtomCallback } from './utils/useAtomCallback.ts'
-export { useHydrateAtoms } from './utils/useHydrateAtoms.ts'
+'use client'
+
+export { useResetAtom } from './utils/useResetAtom.js'
+export { useReducerAtom } from './utils/useReducerAtom.js'
+export { useAtomCallback } from './utils/useAtomCallback.js'
+export { useHydrateAtoms } from './utils/useHydrateAtoms.js'

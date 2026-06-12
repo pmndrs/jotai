@@ -5,7 +5,7 @@ import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
 import { loadable } from 'jotai/vanilla/utils'
-import { sleep } from '../../test-utils'
+import { sleep } from '../../test-utils.js'
 
 beforeEach(() => {
   vi.useFakeTimers()

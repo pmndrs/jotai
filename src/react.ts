@@ -1,4 +1,6 @@
-export { Provider, useStore } from './react/Provider.ts'
-export { useAtomValue } from './react/useAtomValue.ts'
-export { useSetAtom } from './react/useSetAtom.ts'
-export { useAtom } from './react/useAtom.ts'
+'use client'
+
+export { Provider, useStore } from './react/Provider.js'
+export { useAtomValue } from './react/useAtomValue.js'
+export { useSetAtom } from './react/useSetAtom.js'
+export { useAtom } from './react/useAtom.js'

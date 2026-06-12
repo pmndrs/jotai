@@ -1,10 +1,12 @@
+'use client'
+
 import { useCallback } from 'react'
 import type {
   ExtractAtomArgs,
   ExtractAtomResult,
   WritableAtom,
-} from '../vanilla.ts'
-import { useStore } from './Provider.ts'
+} from '../vanilla.js'
+import { useStore } from './Provider.js'
 
 type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
 type Options = Parameters<typeof useStore>[0]

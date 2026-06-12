@@ -1,5 +1,5 @@
-import { atom } from '../../vanilla.ts'
-import type { Atom, Getter, WritableAtom } from '../../vanilla.ts'
+import { atom } from '../../vanilla.js'
+import type { Atom, Getter, WritableAtom } from '../../vanilla.js'
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
   typeof (x as PromiseLike<unknown>)?.then === 'function'
@@ -31,12 +31,15 @@ type SubscribableObservable<T> =
     }
 
 type SymbolObservable<T> = {
-  [key: symbol]: () => SubscribableObservable<T>
+  [key: PropertyKey]: () => SubscribableObservable<T>
 }
 
 type ObservableLike<T> = SubscribableObservable<T> | SymbolObservable<T>
 
 type SubjectLike<T> = ObservableLike<T> & Observer<T>
+
+const getSymbolObservable = () =>
+  (Symbol as unknown as { readonly observable?: symbol }).observable
 
 type Options<Data> = {
   initialValue?: Data | (() => Data)
@@ -82,8 +85,9 @@ export function atomWithObservable<Data>(
 
   const observableResultAtom = atom((get) => {
     const observable = getObservable(get)
+    const symbolObservable = getSymbolObservable() ?? 'undefined'
     const subscribable =
-      (observable as Partial<SymbolObservable<Data>>)[Symbol.observable]?.() ||
+      (observable as Partial<SymbolObservable<Data>>)[symbolObservable]?.() ||
       (observable as SubscribableObservable<Data>)
 
     let resolve: ((result: Result) => void) | undefined

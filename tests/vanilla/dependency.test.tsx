@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import { sleep } from '../test-utils'
+import { sleep } from '../test-utils.js'
 
 beforeEach(() => {
   vi.useFakeTimers()

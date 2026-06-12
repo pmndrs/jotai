@@ -1,2 +1,2 @@
-export * from './vanilla.ts'
-export * from './react.ts'
+export * from './vanilla.js'
+export * from './react.js'

@@ -1,7 +1,9 @@
+'use client'
+
 import { useCallback } from 'react'
-import { useSetAtom } from '../../react.ts'
-import { RESET } from '../../vanilla/utils.ts'
-import type { WritableAtom } from '../../vanilla.ts'
+import { useSetAtom } from '../../react.js'
+import { RESET } from '../../vanilla/utils.js'
+import type { WritableAtom } from '../../vanilla.js'
 
 type Options = Parameters<typeof useSetAtom>[1]
 

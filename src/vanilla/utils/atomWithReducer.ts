@@ -1,5 +1,5 @@
-import { atom } from '../../vanilla.ts'
-import type { WritableAtom } from '../../vanilla.ts'
+import { atom } from '../../vanilla.js'
+import type { WritableAtom } from '../../vanilla.js'
 
 export function atomWithReducer<Value, Action>(
   initialValue: Value,

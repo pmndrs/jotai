@@ -4,7 +4,7 @@ import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { selectAtom } from 'jotai/vanilla/utils'
-import { useCommitCount } from '../../test-utils'
+import { useCommitCount } from '../../test-utils.js'
 
 it('selectAtom works as expected', () => {
   const bigAtom = atom({ a: 0, b: 'othervalue' })

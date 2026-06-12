@@ -1,4 +1,4 @@
-import type { Atom, WritableAtom } from '../../vanilla.ts'
+import type { Atom, WritableAtom } from '../../vanilla.js'
 
 const frozenAtoms = new WeakSet<Atom<unknown>>()
 
