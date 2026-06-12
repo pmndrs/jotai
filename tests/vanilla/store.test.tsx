@@ -1136,6 +1136,32 @@ it('should process all atom listeners even if some of them throw errors', () => 
   expect(listenerC).toHaveBeenCalledTimes(1)
 })
 
+it('throws listener errors without AggregateError support', () => {
+  vi.stubGlobal('AggregateError', undefined)
+  try {
+    const store = createStore()
+    const a = atom(0)
+    const error1 = new Error('error1')
+    const error2 = new Error('error2')
+    store.sub(a, () => {
+      throw error1
+    })
+    store.sub(a, () => {
+      throw error2
+    })
+    let thrown: unknown
+    try {
+      store.set(a, 1)
+    } catch (e) {
+      thrown = e
+    }
+    expect(thrown).toBeInstanceOf(Error)
+    expect((thrown as { errors: unknown[] }).errors).toEqual([error1, error2])
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})
+
 it('should call onInit only once per atom', () => {
   const store = createStore()
   const a = atom(0)

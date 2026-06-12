@@ -553,7 +553,10 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (
     }
   } while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size)
   if (errors.length) {
-    throw new AggregateError(errors)
+    if (typeof AggregateError === 'function') {
+      throw new AggregateError(errors)
+    }
+    throw Object.assign(new Error(), { errors })
   }
 }
 
