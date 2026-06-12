@@ -2,7 +2,7 @@ import { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
+import { atom, getDefaultStore } from 'jotai/vanilla'
 import { sleep } from '../test-utils.js'
 
 beforeEach(() => {
@@ -93,65 +93,7 @@ describe('useAtom delay option test', () => {
   })
 })
 
-describe('atom read function setSelf option test', () => {
-  it('do not suspend with promise resolving with setSelf', async () => {
-    const countAtom = atom(0)
-    const asyncAtom = atom(async () => {
-      await sleep(100)
-      return 'hello'
-    })
-    const refreshAtom = atom(0)
-    const promiseCache = new WeakMap<object, string>()
-    const derivedAtom = atom(
-      (get, { setSelf }) => {
-        get(refreshAtom)
-        const count = get(countAtom)
-        const promise = get(asyncAtom)
-        if (promiseCache.has(promise)) {
-          return (promiseCache.get(promise) as string) + count
-        }
-        promise.then((v) => {
-          promiseCache.set(promise, v)
-          setSelf()
-        })
-        return 'pending' + count
-      },
-      (_get, set) => {
-        set(refreshAtom, (c) => c + 1)
-      },
-    )
-
-    const Component = () => {
-      const text = useAtomValue(derivedAtom)
-      return <div>text: {text}</div>
-    }
-
-    const Controls = () => {
-      const setCount = useSetAtom(countAtom)
-      return (
-        <>
-          <button onClick={() => setCount((c) => c + 1)}>button</button>
-        </>
-      )
-    }
-
-    render(
-      <StrictMode>
-        <Component />
-        <Controls />
-      </StrictMode>,
-    )
-
-    expect(screen.getByText('text: pending0')).toBeInTheDocument()
-    await act(() => vi.advanceTimersByTimeAsync(100))
-    expect(screen.getByText('text: hello0')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByText('button'))
-    expect(screen.getByText('text: hello1')).toBeInTheDocument()
-  })
-})
-
-describe('timing issue with setSelf', () => {
+describe('timing issue', () => {
   it('resolves dependencies reliably after a delay (#2192)', async () => {
     expect.assertions(6)
     const countAtom = atom(0)
@@ -164,12 +106,12 @@ describe('timing issue with setSelf', () => {
     })
 
     const derivedAtom = atom(
-      async (get, { setSelf }) => {
+      async (get) => {
         get(countAtom)
         await Promise.resolve()
         const resultCount = await get(asyncAtom)
         result = resultCount
-        if (resultCount === 2) setSelf() // <-- necessary
+        if (resultCount === 2) getDefaultStore().set(derivedAtom) // <-- necessary
       },
       () => {},
     )

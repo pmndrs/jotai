@@ -666,7 +666,6 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
   const flushCallbacks = buildingBlocks[12]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
   const readAtomState = buildingBlocks[14]
-  const writeAtomState = buildingBlocks[16]
   const mountDependencies = buildingBlocks[17]
   const setAtomStateValueOrPromise = buildingBlocks[20]
   const registerAbortHandler = buildingBlocks[26]
@@ -752,43 +751,12 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
     }
   }
   let controller: AbortController | undefined
-  let setSelf: ((...args: unknown[]) => unknown) | undefined
   const options = {
     get signal() {
       if (!controller) {
         controller = new AbortController()
       }
       return controller.signal
-    },
-    get setSelf() {
-      if (process.env.NODE_ENV !== 'production') {
-        // This is shown even before calling. It's a strong warning.
-        console.warn(
-          '[DEPRECATED] setSelf is deprecated and will be removed in v3.',
-        )
-      }
-      if (
-        process.env.NODE_ENV !== 'production' &&
-        !isActuallyWritableAtom(atom)
-      ) {
-        console.warn('setSelf function cannot be used with read-only atom')
-      }
-      if (!setSelf && isActuallyWritableAtom(atom)) {
-        setSelf = (...args) => {
-          if (process.env.NODE_ENV !== 'production' && isSync) {
-            console.warn('setSelf function cannot be called in sync')
-          }
-          if (!isSync) {
-            try {
-              return writeAtomState(buildingBlocks, store, atom, args)
-            } finally {
-              recomputeInvalidatedAtoms(buildingBlocks, store)
-              flushCallbacks(buildingBlocks, store)
-            }
-          }
-        }
-      }
-      return setSelf
     },
   }
   const prevEpochNumber = atomState.n
