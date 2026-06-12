@@ -53,21 +53,6 @@
       "types@>=5.5": "./dist/react/utils.d.ts",
       "types": "./dist/ts_version_5.5_and_above_is_required.d.ts",
       "default": "./dist/react/utils.js"
-    },
-    "./babel/plugin-debug-label": {
-      "types@>=5.5": "./dist/babel/plugin-debug-label.d.ts",
-      "types": "./dist/ts_version_5.5_and_above_is_required.d.ts",
-      "default": "./dist/babel/plugin-debug-label.js"
-    },
-    "./babel/plugin-react-refresh": {
-      "types@>=5.5": "./dist/babel/plugin-react-refresh.d.ts",
-      "types": "./dist/ts_version_5.5_and_above_is_required.d.ts",
-      "default": "./dist/babel/plugin-react-refresh.js"
-    },
-    "./babel/preset": {
-      "types@>=5.5": "./dist/babel/preset.d.ts",
-      "types": "./dist/ts_version_5.5_and_above_is_required.d.ts",
-      "default": "./dist/babel/preset.js"
     }
   },
   "files": [
@@ -116,16 +101,10 @@
   },
   "homepage": "https://github.com/pmndrs/jotai",
   "devDependencies": {
-    "@babel/core": "^7.29.7",
-    "@babel/plugin-transform-react-jsx": "^7.29.7",
-    "@babel/plugin-transform-typescript": "^7.29.7",
-    "@babel/template": "^7.29.7",
     "@eslint/js": "9.39.4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
-    "@types/babel__core": "^7.20.5",
-    "@types/babel__template": "^7.4.4",
     "@types/node": "^25.9.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -156,18 +135,10 @@
     "wonka": "^6.3.6"
   },
   "peerDependencies": {
-    "@babel/core": ">=7.0.0",
-    "@babel/template": ">=7.0.0",
     "@types/react": ">=18.0.0",
     "react": ">=18.0.0"
   },
   "peerDependenciesMeta": {
-    "@babel/core": {
-      "optional": true
-    },
-    "@babel/template": {
-      "optional": true
-    },
     "@types/react": {
       "optional": true
     },
