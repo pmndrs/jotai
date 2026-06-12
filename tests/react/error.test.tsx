@@ -1,11 +1,4 @@
-import {
-  Component,
-  StrictMode,
-  Suspense,
-  version as reactVersion,
-  useEffect,
-  useState,
-} from 'react'
+import { Component, StrictMode, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -466,19 +459,9 @@ describe('throws an error while updating in effect cleanup', () => {
 
     fireEvent.click(screen.getByText('close'))
 
-    // NOTE: Conditional expect is required because behavior differs by React version
-    // AND build mode (dev vs prod). Using it.runIf/skipIf causes production build failures.
-    /* eslint-disable vitest/no-conditional-expect */
-    if (reactVersion.startsWith('17.')) {
-      expect(
-        errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
-      ).toBe(true)
-    } else {
-      expect(
-        screen.getByText('Errored: err_in_effect_cleanup'),
-      ).toBeInTheDocument()
-    }
-    /* eslint-enable vitest/no-conditional-expect */
+    expect(
+      screen.getByText('Errored: err_in_effect_cleanup'),
+    ).toBeInTheDocument()
   })
 
   it('[DEV-ONLY] double setCount', () => {
@@ -499,19 +482,9 @@ describe('throws an error while updating in effect cleanup', () => {
 
     fireEvent.click(screen.getByText('close'))
 
-    // NOTE: Conditional expect is required because behavior differs by React version
-    // AND build mode (dev vs prod). Using it.runIf/skipIf causes production build failures.
-    /* eslint-disable vitest/no-conditional-expect */
-    if (reactVersion.startsWith('17.')) {
-      expect(
-        errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
-      ).toBe(true)
-    } else {
-      expect(
-        screen.getByText('Errored: err_in_effect_cleanup'),
-      ).toBeInTheDocument()
-    }
-    /* eslint-enable vitest/no-conditional-expect */
+    expect(
+      screen.getByText('Errored: err_in_effect_cleanup'),
+    ).toBeInTheDocument()
   })
 })
 

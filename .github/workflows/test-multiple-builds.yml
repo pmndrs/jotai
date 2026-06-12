@@ -27,10 +27,6 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install
       - run: pnpm run build
-      - name: Use React 17 for production test
-        if: ${{ matrix.env == 'production' }}
-        run: |
-          pnpm add -D react@17.0.2 react-dom@17.0.2 @testing-library/react@12.1.4
       - name: Patch for DEV-ONLY
         if: ${{ matrix.env == 'development' }}
         run: |
@@ -41,13 +37,13 @@ jobs:
         run: |
           sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\PRD-ONLY\]/\1('/" tests/*/*.ts* tests/*/*/*.ts*
           sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\[DEV-ONLY\]/\1.skip('/" tests/*/*.ts* tests/*/*/*.ts*
+      - name: Patch dist for production # React itself must stay in development mode for act() to work
+        if: ${{ matrix.env == 'production' }}
+        run: |
+          sed -i~ 's/process\.env\.NODE_ENV/"production"/g' dist/*.js dist/*/*.js dist/*/*/*.js
       - name: Patch for ESM
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.mts
-        env:
-          NODE_ENV: ${{ matrix.env }}
       - name: Test ESM ${{ matrix.env }}
         run: |
           pnpm run test:spec
-        env:
-          NODE_ENV: ${{ matrix.env }}
