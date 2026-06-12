@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
@@ -10,18 +9,7 @@ export default defineConfig({
       { find: /^jotai(.*)$/, replacement: resolve('./src/$1.ts') },
     ],
   },
-  plugins: [
-    react({
-      babel: {
-        plugins: existsSync('./dist/babel/plugin-debug-label.js')
-          ? [
-              // FIXME Can we read from ./src instead of ./dist?
-              './dist/babel/plugin-debug-label.js',
-            ]
-          : [],
-      },
-    }),
-  ],
+  plugins: [react()],
   test: {
     name: 'jotai',
     // Keeping globals to true triggers React Testing Library's auto cleanup

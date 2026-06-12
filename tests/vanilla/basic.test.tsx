@@ -19,10 +19,6 @@ it('creates atoms', () => {
   const decrementCountAtom = atom(null, (get, set) => {
     set(countAtom, get(countAtom) - 1)
   })
-  delete countAtom.debugLabel
-  delete doubledCountAtom.debugLabel
-  delete sumCountAtom.debugLabel
-  delete decrementCountAtom.debugLabel
   expect({
     countAtom,
     doubledCountAtom,
@@ -64,7 +60,6 @@ it('[DEV-ONLY] should include debugLabel in toString output', () => {
 it('should let users mark atoms as private', () => {
   const internalAtom = atom(0)
   internalAtom.debugPrivate = true
-  delete internalAtom.debugLabel
 
   expect(internalAtom).toMatchInlineSnapshot(`
     {
