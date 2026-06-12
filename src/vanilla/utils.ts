@@ -1,7 +1,6 @@
 export { RESET } from './utils/constants.js'
 export { atomWithReset } from './utils/atomWithReset.js'
 export { atomWithReducer } from './utils/atomWithReducer.js'
-export { atomFamily } from './utils/atomFamily.js'
 export { selectAtom } from './utils/selectAtom.js'
 export { freezeAtom, freezeAtomCreator } from './utils/freezeAtom.js'
 export { splitAtom } from './utils/splitAtom.js'
