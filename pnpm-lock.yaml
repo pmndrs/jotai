@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  downlevel-dts>typescript: ^6.0.3
+
 importers:
 
   .:
@@ -8132,11 +8135,6 @@ packages:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: '>=4.8.4 <6.1.0'
 
-  typescript@6.0.0-dev.20260416:
-    resolution: {integrity: sha512-64CCow5rQc6+oBAPqLtvZ8f3iz4WVCLwMVkg6/kOfMQlGshVOMkBhCXn+MMP4SX4Xtnz48VpD98FkptirMEuEQ==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   typescript@6.0.3:
     resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
     engines: {node: '>=14.17'}
@@ -13080,7 +13078,7 @@ snapshots:
     dependencies:
       semver: 7.8.4
       shelljs: 0.8.5
-      typescript: 6.0.0-dev.20260416
+      typescript: 6.0.3
 
   dunder-proto@1.0.1:
     dependencies:
@@ -18077,8 +18075,6 @@ snapshots:
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
-
-  typescript@6.0.0-dev.20260416: {}
 
   typescript@6.0.3: {}
 
