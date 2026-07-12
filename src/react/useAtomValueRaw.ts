@@ -12,14 +12,17 @@ type Store = ReturnType<typeof useStore>
 
 type Options = Parameters<typeof useStore>[0]
 
-export function useAtomVal<Value>(atom: Atom<Value>, options?: Options): Value
+export function useAtomValueRaw<Value>(
+  atom: Atom<Value>,
+  options?: Options,
+): Value
 
-export function useAtomVal<AtomType extends Atom<unknown>>(
+export function useAtomValueRaw<AtomType extends Atom<unknown>>(
   atom: AtomType,
   options?: Options,
 ): ExtractAtomValue<AtomType>
 
-export function useAtomVal<Value>(atom: Atom<Value>, options?: Options) {
+export function useAtomValueRaw<Value>(atom: Atom<Value>, options?: Options) {
   const store = useStore(options)
   const [[valueFromReducer, storeFromReducer, atomFromReducer], rerender] =
     useReducer<readonly [Value, Store, typeof atom], undefined, []>(

@@ -1,7 +1,7 @@
-import { StrictMode, useEffect } from 'react'
+import { StrictMode, useEffect, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { useAtomSyncVal, useSetAtom } from 'jotai/react'
+import { useAtomValueRawSync, useSetAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 
 beforeEach(() => {
@@ -12,11 +12,11 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-it('useAtomSyncVal basic test', () => {
+it('useAtomValueRawSync basic test', () => {
   const countAtom = atom(0)
 
   const Counter = () => {
-    const count = useAtomSyncVal(countAtom)
+    const count = useAtomValueRawSync(countAtom)
     const setCount = useSetAtom(countAtom)
 
     return (
@@ -38,12 +38,12 @@ it('useAtomSyncVal basic test', () => {
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('useAtomSyncVal with derived atom', () => {
+it('useAtomValueRawSync with derived atom', () => {
   const countAtom = atom(1)
   const doubledAtom = atom((get) => get(countAtom) * 2)
 
   const Counter = () => {
-    const doubled = useAtomSyncVal(doubledAtom)
+    const doubled = useAtomValueRawSync(doubledAtom)
     const setCount = useSetAtom(countAtom)
 
     return (
@@ -65,12 +65,12 @@ it('useAtomSyncVal with derived atom', () => {
   expect(screen.getByText('doubled: 4')).toBeInTheDocument()
 })
 
-it('useAtomSyncVal with async atom returns a promise as is', () => {
+it('useAtomValueRawSync with async atom returns a promise as is', () => {
   const asyncAtom = atom(async () => 42)
   let value: unknown
 
   const AsyncComponent = () => {
-    value = useAtomSyncVal(asyncAtom)
+    value = useAtomValueRawSync(asyncAtom)
     return <div>rendered without suspending</div>
   }
 
@@ -84,7 +84,28 @@ it('useAtomSyncVal with async atom returns a promise as is', () => {
   expect(value).toBeInstanceOf(Promise)
 })
 
-it('useAtomSyncVal picks up a value written on mount before subscription', () => {
+it('useAtomValueRawSync returns a stable promise across re-renders', () => {
+  const asyncAtom = atom(async () => 42)
+  const promises: unknown[] = []
+
+  const Component = () => {
+    const [, setCount] = useState(0)
+    promises.push(useAtomValueRawSync(asyncAtom))
+    return <button onClick={() => setCount((c) => c + 1)}>rerender</button>
+  }
+
+  render(
+    <StrictMode>
+      <Component />
+    </StrictMode>,
+  )
+
+  fireEvent.click(screen.getByText('rerender'))
+  expect(promises.length).toBeGreaterThanOrEqual(2)
+  expect(new Set(promises).size).toBe(1)
+})
+
+it('useAtomValueRawSync picks up a value written on mount before subscription', () => {
   const countAtom = atom(0)
 
   const Child = () => {
@@ -96,7 +117,7 @@ it('useAtomSyncVal picks up a value written on mount before subscription', () =>
   }
 
   const Counter = () => {
-    const count = useAtomSyncVal(countAtom)
+    const count = useAtomValueRawSync(countAtom)
     return (
       <div>
         count: {count}
@@ -114,12 +135,12 @@ it('useAtomSyncVal picks up a value written on mount before subscription', () =>
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('useAtomSyncVal with store option', () => {
+it('useAtomValueRawSync with store option', () => {
   const store = createStore()
   const countAtom = atom(0)
 
   const Counter = () => {
-    const count = useAtomSyncVal(countAtom, { store })
+    const count = useAtomValueRawSync(countAtom, { store })
     return <div>count: {count}</div>
   }
 

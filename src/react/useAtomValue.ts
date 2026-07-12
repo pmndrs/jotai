@@ -3,7 +3,7 @@
 import React from 'react'
 import type { Atom, ExtractAtomValue } from '../vanilla.js'
 import { isPromiseLike } from './continuablePromise.js'
-import { useAtomVal } from './useAtomVal.js'
+import { useAtomValueRaw } from './useAtomValueRaw.js'
 
 const attachPromiseStatus = <T>(
   promise: PromiseLike<T> & {
@@ -49,7 +49,7 @@ const use =
     }
   })
 
-type Options = Parameters<typeof useAtomVal>[1] & {
+type Options = Parameters<typeof useAtomValueRaw>[1] & {
   unstable_promiseStatus?: boolean
 }
 
@@ -65,7 +65,7 @@ export function useAtomValue<AtomType extends Atom<unknown>>(
 
 export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   const { unstable_promiseStatus: promiseStatus = !React.use } = options || {}
-  const value = useAtomVal(atom, options)
+  const value = useAtomValueRaw(atom, options)
   if (isPromiseLike(value)) {
     if (promiseStatus) {
       attachPromiseStatus(value)

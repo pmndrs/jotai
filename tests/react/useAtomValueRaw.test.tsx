@@ -1,7 +1,7 @@
-import { StrictMode } from 'react'
+import { StrictMode, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { useAtomVal, useSetAtom } from 'jotai/react'
+import { useAtomValueRaw, useSetAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 import { useCommitCount } from '../test-utils.js'
 
@@ -13,11 +13,11 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-it('useAtomVal basic test', () => {
+it('useAtomValueRaw basic test', () => {
   const countAtom = atom(0)
 
   const Counter = () => {
-    const count = useAtomVal(countAtom)
+    const count = useAtomValueRaw(countAtom)
     const setCount = useSetAtom(countAtom)
 
     return (
@@ -39,12 +39,12 @@ it('useAtomVal basic test', () => {
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('useAtomVal with derived atom', () => {
+it('useAtomValueRaw with derived atom', () => {
   const countAtom = atom(1)
   const doubledAtom = atom((get) => get(countAtom) * 2)
 
   const Counter = () => {
-    const doubled = useAtomVal(doubledAtom)
+    const doubled = useAtomValueRaw(doubledAtom)
     const setCount = useSetAtom(countAtom)
 
     return (
@@ -66,12 +66,12 @@ it('useAtomVal with derived atom', () => {
   expect(screen.getByText('doubled: 4')).toBeInTheDocument()
 })
 
-it('useAtomVal with async atom returns a promise as is', () => {
+it('useAtomValueRaw with async atom returns a promise as is', () => {
   const asyncAtom = atom(async () => 42)
   let value: unknown
 
   const AsyncComponent = () => {
-    value = useAtomVal(asyncAtom)
+    value = useAtomValueRaw(asyncAtom)
     return <div>rendered without suspending</div>
   }
 
@@ -85,11 +85,32 @@ it('useAtomVal with async atom returns a promise as is', () => {
   expect(value).toBeInstanceOf(Promise)
 })
 
-it('useAtomVal renders once on initial mount', () => {
+it('useAtomValueRaw returns a stable promise across re-renders', () => {
+  const asyncAtom = atom(async () => 42)
+  const promises: unknown[] = []
+
+  const Component = () => {
+    const [, setCount] = useState(0)
+    promises.push(useAtomValueRaw(asyncAtom))
+    return <button onClick={() => setCount((c) => c + 1)}>rerender</button>
+  }
+
+  render(
+    <StrictMode>
+      <Component />
+    </StrictMode>,
+  )
+
+  fireEvent.click(screen.getByText('rerender'))
+  expect(promises.length).toBeGreaterThanOrEqual(2)
+  expect(new Set(promises).size).toBe(1)
+})
+
+it('useAtomValueRaw renders once on initial mount', () => {
   const countAtom = atom(0)
 
   const Counter = () => {
-    const count = useAtomVal(countAtom)
+    const count = useAtomValueRaw(countAtom)
     return (
       <div>
         commits: {useCommitCount()}, count: {count}
@@ -114,12 +135,12 @@ it('useAtomVal renders once on initial mount', () => {
   expect(screen.getByText('commits: 2, count: 1')).toBeInTheDocument()
 })
 
-it('useAtomVal with store option', () => {
+it('useAtomValueRaw with store option', () => {
   const store = createStore()
   const countAtom = atom(0)
 
   const Counter = () => {
-    const count = useAtomVal(countAtom, { store })
+    const count = useAtomValueRaw(countAtom, { store })
     return <div>count: {count}</div>
   }
 

@@ -10,17 +10,20 @@ import { useStore } from './Provider.js'
 
 type Options = Parameters<typeof useStore>[0]
 
-export function useAtomSyncVal<Value>(
+export function useAtomValueRawSync<Value>(
   atom: Atom<Value>,
   options?: Options,
 ): Value
 
-export function useAtomSyncVal<AtomType extends Atom<unknown>>(
+export function useAtomValueRawSync<AtomType extends Atom<unknown>>(
   atom: AtomType,
   options?: Options,
 ): ExtractAtomValue<AtomType>
 
-export function useAtomSyncVal<Value>(atom: Atom<Value>, options?: Options) {
+export function useAtomValueRawSync<Value>(
+  atom: Atom<Value>,
+  options?: Options,
+) {
   const store = useStore(options)
   const getSnapshot = useCallback(() => {
     const value = store.get(atom)
