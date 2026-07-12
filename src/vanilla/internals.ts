@@ -1131,15 +1131,18 @@ const BUILDING_BLOCK_storeSub: StoreSub = (
   listener,
 ) => {
   const flushCallbacks = buildingBlocks[12]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
   const mountAtom = buildingBlocks[18]
   const unmountAtom = buildingBlocks[19]
   const mounted = mountAtom(buildingBlocks, store, atom)
   const listeners = mounted.l
   listeners.add(listener)
+  recomputeInvalidatedAtoms(buildingBlocks, store)
   flushCallbacks(buildingBlocks, store)
   return () => {
     listeners.delete(listener)
     unmountAtom(buildingBlocks, store, atom)
+    recomputeInvalidatedAtoms(buildingBlocks, store)
     flushCallbacks(buildingBlocks, store)
   }
 }

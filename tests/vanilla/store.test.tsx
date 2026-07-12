@@ -1622,3 +1622,67 @@ it('does not recompute derived atom redundantly when store.set in read uses retu
   expect(derivedReadCount).not.toBe(3)
   expect(derivedReadCount).toBe(1)
 })
+
+it('notifies subscriber when a nested no-op store.set and a subscription happen inside the outer write (#3353)', () => {
+  const store = createStore()
+  const a = atom(0)
+  const derivedAtom = atom((get) => get(a))
+  const b = atom(0)
+
+  const listener = vi.fn()
+  store.sub(derivedAtom, listener)
+
+  const w = atom(null, (_get, set) => {
+    set(a, 1) // derivedAtom becomes invalidated, `a` is pending
+    // nested store.set that changes nothing: storeSet skips its
+    // recompute+flush because changedAtoms.size did not change
+    store.set(b, store.get(b))
+    // sub/unsub used to run flushCallbacks without recomputing
+    // invalidated atoms, clearing `a` from changedAtoms while
+    // derivedAtom was still invalidated (stranding its listener)
+    store.sub(b, () => {})()
+  })
+  store.set(w)
+
+  expect(store.get(derivedAtom)).toBe(1)
+  expect(listener).toHaveBeenCalledTimes(1)
+})
+
+it('notifies subscriber of interrupt-derived atom after a synchronous event cascade of nested store.set (#3353)', () => {
+  const store = createStore()
+  const interruptAtom = atom<{ resume: () => void } | undefined>(undefined)
+  const isInterruptedAtom = atom((get) => get(interruptAtom) !== undefined)
+  const dataAtom = atom(0)
+
+  // plain event emitter (not jotai)
+  const emitterListeners = new Set<() => void>()
+  const externalState = 0 // unchanged while interrupted -> no-op set
+
+  // atomEffect-style helper with temporary unsubscribe/resubscribe
+  let unsub = store.sub(dataAtom, () => {})
+  emitterListeners.add(() => {
+    store.set(dataAtom, externalState)
+    unsub()
+    unsub = store.sub(dataAtom, () => {})
+  })
+
+  const listener = vi.fn()
+  store.sub(isInterruptedAtom, listener)
+
+  const startInterruptAtom = atom(null, (_get, set) => {
+    set(interruptAtom, {
+      resume: () => emitterListeners.forEach((l) => l()),
+    })
+  })
+  const finishInterruptActionAtom = atom(null, (get, set) => {
+    const interrupt = get(interruptAtom)
+    set(interruptAtom, undefined)
+    interrupt?.resume() // synchronous cascade, not jotai
+  })
+
+  store.set(startInterruptAtom)
+  expect(listener).toHaveBeenCalledTimes(1) // false -> true
+  store.set(finishInterruptActionAtom)
+  expect(store.get(isInterruptedAtom)).toBe(false)
+  expect(listener).toHaveBeenCalledTimes(2) // true -> false
+})
