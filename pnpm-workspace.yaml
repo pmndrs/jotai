@@ -20,4 +20,4 @@ allowBuilds:
   msgpackr-extract: false
   sharp: false
 overrides:
-  "downlevel-dts>typescript": $typescript
+  "downlevel-dts>typescript": ^6.0.3
