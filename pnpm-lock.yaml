@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  downlevel-dts>typescript: ^6.0.3
+
 importers:
 
   .:

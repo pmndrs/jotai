@@ -2,7 +2,7 @@
   "name": "jotai",
   "description": "👻 Primitive and flexible state management for React",
   "type": "module",
-  "version": "2.20.1",
+  "version": "2.20.2",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "typesVersions": {

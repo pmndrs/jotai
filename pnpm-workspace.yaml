@@ -19,3 +19,5 @@ allowBuilds:
   lmdb: false
   msgpackr-extract: false
   sharp: false
+overrides:
+  'downlevel-dts>typescript': ^6.0.3
