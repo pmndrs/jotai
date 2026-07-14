@@ -1,7 +1,7 @@
 import { StrictMode, Suspense, useEffect, useMemo, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { useAtom } from 'jotai/react'
+import { useAtom, useAtomValueRawSync, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
 import { sleep, useCommitCount } from '../test-utils.js'
@@ -502,7 +502,8 @@ it('can write an atom value on useEffect in children', async () => {
   }
 
   const Counter = () => {
-    const [count, setCount] = useAtom(countAtom)
+    const count = useAtomValueRawSync(countAtom)
+    const setCount = useSetAtom(countAtom)
     return (
       <div>
         count: {count}
@@ -919,8 +920,8 @@ it('chained derive atom with onMount and useEffect (#897)', () => {
   }))
 
   const Counter = () => {
-    const [, setCount] = useAtom(countAtom)
-    const [{ count }] = useAtom(derivedObjectAtom)
+    const setCount = useSetAtom(countAtom)
+    const { count } = useAtomValueRawSync(derivedObjectAtom)
     useEffect(() => {
       setCount(1)
     }, [setCount])

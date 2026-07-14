@@ -13,8 +13,8 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('useAtom delay option test', () => {
-  it('suspend for Promise.resolve without delay option', async () => {
+describe('suspend', () => {
+  it('suspend for Promise.resolve', async () => {
     const countAtom = atom(0)
     const asyncAtom = atom((get) => {
       const count = get(countAtom)
@@ -50,44 +50,6 @@ describe('useAtom delay option test', () => {
     expect(screen.getByText('count: 0')).toBeInTheDocument()
 
     await act(() => fireEvent.click(screen.getByText('button')))
-    await act(() => vi.advanceTimersByTimeAsync(0))
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-  })
-
-  it('do not suspend for Promise.resolve with delay option', async () => {
-    const countAtom = atom(0)
-    const asyncAtom = atom((get) => {
-      const count = get(countAtom)
-      if (count === 0) {
-        return 0
-      }
-      return Promise.resolve(count)
-    })
-
-    const Component = () => {
-      const count = useAtomValue(asyncAtom, { delay: 0 })
-      return <div>count: {count}</div>
-    }
-
-    const Controls = () => {
-      const setCount = useSetAtom(countAtom)
-      return (
-        <>
-          <button onClick={() => setCount((c) => c + 1)}>button</button>
-        </>
-      )
-    }
-
-    render(
-      <StrictMode>
-        <Component />
-        <Controls />
-      </StrictMode>,
-    )
-
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByText('button'))
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('count: 1')).toBeInTheDocument()
   })

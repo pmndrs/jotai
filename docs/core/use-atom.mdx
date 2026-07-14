@@ -119,6 +119,36 @@ const Counter = () => {
 
 Similar to the `useSetAtom` hook, `useAtomValue` allows you to access a read-only atom. Nonetheless, it can also be used to access read-write atom's values.
 
+## useAtomValueRaw
+
+⚠️ This hook is only available since Jotai v3, and it's intended for advanced users.
+
+```jsx
+const countAtom = atom(0)
+
+const Counter = () => {
+  const count = useAtomValueRaw(countAtom)
+  // ...
+}
+```
+
+`useAtomValueRaw` is like `useAtomValue`, but it doesn't resolve promises: the value of an async atom is returned as a promise, and the component never suspends. It subscribes to the store in an effect, so it doesn't cause an extra re-render on initial mount. As a trade-off, a value change that happens between the initial render and the subscription is not picked up until the next change.
+
+## useAtomValueRawSync
+
+⚠️ This hook is only available since Jotai v3, and it's intended for advanced users.
+
+```jsx
+const countAtom = atom(0)
+
+const Counter = () => {
+  const count = useAtomValueRawSync(countAtom)
+  // ...
+}
+```
+
+`useAtomValueRawSync` has the same signature as `useAtomValueRaw` and doesn't resolve promises either, but it's implemented with `useSyncExternalStore`. It avoids tearing and picks up values written during mount. As a trade-off, updates are always rendered synchronously without taking advantage of concurrent rendering features.
+
 ## useSetAtom
 
 ```jsx
