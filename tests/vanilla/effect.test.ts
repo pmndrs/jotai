@@ -2,8 +2,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 import {
-  INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks,
-  INTERNAL_initializeStoreHooksRev3 as INTERNAL_initializeStoreHooks,
+  INTERNAL_getBuildingBlocksRev4 as INTERNAL_getBuildingBlocks,
+  INTERNAL_initializeStoreHooksRev4 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
 beforeEach(() => {
@@ -67,7 +67,7 @@ function syncEffect(effect: Effect): Atom<void> {
       }
     }
     const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-    const storeHooks = INTERNAL_initializeStoreHooks(buildingBlocks[6])
+    const storeHooks = INTERNAL_initializeStoreHooks(buildingBlocks.h)
     const syncEffectChannel = ensureSyncEffectChannel(store)
     storeHooks.m.add(internalAtom, () => {
       // mount
@@ -97,7 +97,7 @@ function ensureSyncEffectChannel(store: any) {
   if (!store[syncEffectChannelSymbol]) {
     store[syncEffectChannelSymbol] = new Set<() => void>()
     const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-    const storeHooks = INTERNAL_initializeStoreHooks(buildingBlocks[6])
+    const storeHooks = INTERNAL_initializeStoreHooks(buildingBlocks.h)
     storeHooks.f.add(() => {
       const syncEffectChannel = store[syncEffectChannelSymbol] as Set<
         () => void

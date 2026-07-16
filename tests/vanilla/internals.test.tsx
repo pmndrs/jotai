@@ -8,15 +8,15 @@ import type {
   INTERNAL_InvalidatedAtoms,
 } from 'jotai/vanilla/internals'
 import {
-  INTERNAL_buildStoreRev3 as INTERNAL_buildStore,
-  INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks,
-  INTERNAL_initializeStoreHooksRev3 as INTERNAL_initializeStoreHooks,
+  INTERNAL_buildStoreRev4 as INTERNAL_buildStore,
+  INTERNAL_getBuildingBlocksRev4 as INTERNAL_getBuildingBlocks,
+  INTERNAL_initializeStoreHooksRev4 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
-const buildingBlockLength = 29
+const buildingBlockKeys = [...'amicqQhRWIMefCrdwDtTvgsbBpHAE']
 
 describe('internals', () => {
-  it('should not return a sparse building blocks array', () => {
+  it('should return complete building blocks', () => {
     {
       const store = createStore()
       const buildingBlocks = INTERNAL_getBuildingBlocks(store)
@@ -46,16 +46,14 @@ describe('internals', () => {
       } as INTERNAL_AtomStateMap
     }
     const mockAtomStateMap1 = createMockAtomStateMap()
-    const buildingBlocks1: Partial<INTERNAL_BuildingBlocks> = [
-      mockAtomStateMap1,
-    ]
-    const store1 = INTERNAL_buildStore(...buildingBlocks1)
-    const buildingBlocks2 = [
-      ...INTERNAL_getBuildingBlocks(store1),
-    ] as INTERNAL_BuildingBlocks
+    const buildingBlocks1: Partial<INTERNAL_BuildingBlocks> = {
+      a: mockAtomStateMap1,
+    }
+    const store1 = INTERNAL_buildStore(buildingBlocks1)
+    const buildingBlocks2 = { ...INTERNAL_getBuildingBlocks(store1) }
     const mockAtomStateMap2 = createMockAtomStateMap()
-    buildingBlocks2[0] = mockAtomStateMap2
-    const store2 = INTERNAL_buildStore(...buildingBlocks2)
+    buildingBlocks2.a = mockAtomStateMap2
+    const store2 = INTERNAL_buildStore(buildingBlocks2)
     store2.get(atom(0))
     expect(mockAtomStateMap1.get).not.toHaveBeenCalled()
     expect(mockAtomStateMap2.get).toHaveBeenCalled()
@@ -66,30 +64,28 @@ describe('internals', () => {
       internal: vi.fn(),
       external: vi.fn(),
     }
-    const bb0 = [] as Partial<INTERNAL_BuildingBlocks>
-    bb0[21] = function storeGet1() {
+    const bb0: Partial<INTERNAL_BuildingBlocks> = {}
+    bb0.g = function storeGet1() {
       didRun.internal()
-    } as INTERNAL_BuildingBlocks[21]
+    } as INTERNAL_BuildingBlocks['g']
     let bbInternal: Readonly<INTERNAL_BuildingBlocks> | undefined
     function storeGet() {
       didRun.external()
     }
-    bb0[24] = (bbi) => {
+    bb0.B = (bbi) => {
       bbInternal = bbi
-      const bb1 = [...bbi] as INTERNAL_BuildingBlocks
-      bb1[21] = storeGet as INTERNAL_BuildingBlocks[21]
-      return bb1
+      return { ...bbi, g: storeGet as INTERNAL_BuildingBlocks['g'] }
     }
-    const store1 = INTERNAL_buildStore(...bb0)
+    const store1 = INTERNAL_buildStore(bb0)
     const bb1 = INTERNAL_getBuildingBlocks(store1)
     expect(isBuildingBlocks(bb1)).toBe(true)
     expect(isBuildingBlocks(bbInternal)).toBe(true)
-    const store2 = INTERNAL_buildStore(...bb1)
+    const store2 = INTERNAL_buildStore(bb1)
     const bb2 = INTERNAL_getBuildingBlocks(store2)
     expect(isBuildingBlocks(bb2)).toBe(true)
     expect(isBuildingBlocks(bbInternal)).toBe(true)
-    expect(bb0[21]).not.toBe(bb1[21])
-    expect(bb1[21]).toBe(bb2[21])
+    expect(bb0.g).not.toBe(bb1.g)
+    expect(bb1.g).toBe(bb2.g)
     store1.get(atom(0))
     expect(didRun.internal).toHaveBeenCalledTimes(1)
     expect(didRun.external).toHaveBeenCalledTimes(0)
@@ -115,10 +111,12 @@ describe('internals', () => {
     }
     ;[...deps, derivedAtom].forEach(wrapRead)
     const rawBlocks = INTERNAL_getBuildingBlocks(INTERNAL_buildStore())
-    const buildingBlocks = [...rawBlocks] as INTERNAL_BuildingBlocks
-    const ras = vi.fn(buildingBlocks[14])
-    buildingBlocks[14] = ras as (typeof buildingBlocks)[14]
-    const store = INTERNAL_buildStore(...buildingBlocks)
+    const ras = vi.fn(rawBlocks.r)
+    const buildingBlocks = {
+      ...rawBlocks,
+      r: ras as INTERNAL_BuildingBlocks['r'],
+    }
+    const store = INTERNAL_buildStore(buildingBlocks)
     console.time('store.get')
     store.get(derivedAtom) // does a deep scan of atom dependencies
     console.timeEnd('store.get')
@@ -160,10 +158,12 @@ describe('internals', () => {
       wrapRead,
     )
     const rawBlocks = INTERNAL_getBuildingBlocks(INTERNAL_buildStore())
-    const buildingBlocks = [...rawBlocks] as INTERNAL_BuildingBlocks
-    const ras = vi.fn(buildingBlocks[14])
-    buildingBlocks[14] = ras as (typeof buildingBlocks)[14]
-    const store = INTERNAL_buildStore(...buildingBlocks)
+    const ras = vi.fn(rawBlocks.r)
+    const buildingBlocks = {
+      ...rawBlocks,
+      r: ras as INTERNAL_BuildingBlocks['r'],
+    }
+    const store = INTERNAL_buildStore(buildingBlocks)
 
     store.get(derivedAtom1)
     store.get(derivedAtom2)
@@ -204,9 +204,10 @@ describe('internals', () => {
       } as INTERNAL_InvalidatedAtoms
     })()
 
-    const partialBuildingBlocks: Partial<INTERNAL_BuildingBlocks> = []
-    partialBuildingBlocks[2] = invalidatedAtoms
-    const store = INTERNAL_buildStore(...partialBuildingBlocks)
+    const partialBuildingBlocks: Partial<INTERNAL_BuildingBlocks> = {
+      i: invalidatedAtoms,
+    }
+    const store = INTERNAL_buildStore(partialBuildingBlocks)
 
     const baseAtom = atom(0)
     const midAtom1 = atom((get) => get(baseAtom))
@@ -215,7 +216,7 @@ describe('internals', () => {
 
     const unsub = store.sub(leafAtom, () => {})
     const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-    const invalidateDependents = buildingBlocks[15]
+    const invalidateDependents = buildingBlocks.d
     expect(() =>
       invalidateDependents(buildingBlocks, store, baseAtom),
     ).not.toThrow()
@@ -285,9 +286,7 @@ describe('store hooks', () => {
   // Helper function to create store with hooks
   const createStoreWithHooks = () => {
     const storeHooks = INTERNAL_initializeStoreHooks({})
-    const buildingBlocks = [] as Partial<INTERNAL_BuildingBlocks>
-    buildingBlocks[6] = storeHooks
-    const store = INTERNAL_buildStore(...buildingBlocks)
+    const store = INTERNAL_buildStore({ h: storeHooks })
     return { store, storeHooks }
   }
 
@@ -386,15 +385,13 @@ describe('store hooks', () => {
   })
 })
 
-function isSparse(arr: ReadonlyArray<unknown>) {
-  return arr.some((_, i) => !Object.prototype.hasOwnProperty.call(arr, i))
-}
-
-function isBuildingBlocks(blocks: ReadonlyArray<unknown> | undefined) {
+function isBuildingBlocks(blocks: object | undefined) {
   return (
     blocks !== undefined &&
-    blocks.length === buildingBlockLength &&
-    isSparse(blocks) === false
+    Object.keys(blocks).length === buildingBlockKeys.length &&
+    buildingBlockKeys.every((key) =>
+      Object.prototype.hasOwnProperty.call(blocks, key),
+    )
   )
 }
 
