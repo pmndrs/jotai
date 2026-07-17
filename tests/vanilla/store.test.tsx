@@ -5,6 +5,8 @@ import {
   INTERNAL_buildStoreRev4 as INTERNAL_buildStore,
   INTERNAL_getBuildingBlocksRev4 as INTERNAL_getBuildingBlocks,
   INTERNAL_initializeStoreHooksRev4 as INTERNAL_initializeStoreHooks,
+  INTERNAL_KEY_atomStateMap as KEY_atomStateMap,
+  INTERNAL_KEY_storeHooks as KEY_storeHooks,
 } from 'jotai/vanilla/internals'
 import type { INTERNAL_Store } from 'jotai/vanilla/internals'
 import { sleep } from '../test-utils.js'
@@ -28,7 +30,7 @@ type DevStore = {
 
 const createDevStore = (): INTERNAL_Store & DevStore => {
   const storeHooks = INTERNAL_initializeStoreHooks({})
-  const store = INTERNAL_buildStore({ h: storeHooks })
+  const store = INTERNAL_buildStore({ [KEY_storeHooks]: storeHooks })
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
     debugMountedAtoms.add(atom)
@@ -42,16 +44,18 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
   return Object.assign(store, devStore)
 }
 
-type AtomStateMapType = ReturnType<typeof INTERNAL_getBuildingBlocks>['a']
+type AtomStateMapType = ReturnType<
+  typeof INTERNAL_getBuildingBlocks
+>[typeof KEY_atomStateMap]
 
 const deriveStore = (
   store: ReturnType<typeof createStore>,
   enhanceAtomStateMap: (atomStateMap: AtomStateMapType) => AtomStateMapType,
 ): ReturnType<typeof createStore> => {
   const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-  const atomStateMap = buildingBlocks.a
+  const atomStateMap = buildingBlocks[KEY_atomStateMap]
   const derivedStore = INTERNAL_buildStore({
-    a: enhanceAtomStateMap(atomStateMap),
+    [KEY_atomStateMap]: enhanceAtomStateMap(atomStateMap),
   })
   return derivedStore
 }
