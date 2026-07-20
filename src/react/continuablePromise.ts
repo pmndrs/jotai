@@ -1,4 +1,7 @@
-import { INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks } from '../vanilla/internals.js'
+import {
+  INTERNAL_getBuildingBlocksRev4 as INTERNAL_getBuildingBlocks,
+  INTERNAL_KEY_registerAbortHandler as KEY_registerAbortHandler,
+} from '../vanilla/internals.js'
 import type { INTERNAL_Store as Store } from '../vanilla/internals.js'
 
 export const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
@@ -15,7 +18,7 @@ export const createContinuablePromise = <T>(
   getValue: () => PromiseLike<T> | T,
 ): Promise<unknown> => {
   const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-  const registerAbortHandler = buildingBlocks[26]
+  const registerAbortHandler = buildingBlocks[KEY_registerAbortHandler]
   let continuablePromise = continuablePromiseMap.get(promise)
   if (!continuablePromise) {
     continuablePromise = new Promise<T>((resolve, reject) => {

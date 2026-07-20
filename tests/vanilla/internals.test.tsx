@@ -8,15 +8,74 @@ import type {
   INTERNAL_InvalidatedAtoms,
 } from 'jotai/vanilla/internals'
 import {
-  INTERNAL_buildStoreRev3 as INTERNAL_buildStore,
-  INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks,
-  INTERNAL_initializeStoreHooksRev3 as INTERNAL_initializeStoreHooks,
+  INTERNAL_buildStoreRev4 as INTERNAL_buildStore,
+  INTERNAL_getBuildingBlocksRev4 as INTERNAL_getBuildingBlocks,
+  INTERNAL_initializeStoreHooksRev4 as INTERNAL_initializeStoreHooks,
+  INTERNAL_KEY_abortHandlersMap as KEY_abortHandlersMap,
+  INTERNAL_KEY_abortPromise as KEY_abortPromise,
+  INTERNAL_KEY_atomOnInit as KEY_atomOnInit,
+  INTERNAL_KEY_atomOnMount as KEY_atomOnMount,
+  INTERNAL_KEY_atomRead as KEY_atomRead,
+  INTERNAL_KEY_atomStateMap as KEY_atomStateMap,
+  INTERNAL_KEY_atomWrite as KEY_atomWrite,
+  INTERNAL_KEY_changedAtoms as KEY_changedAtoms,
+  INTERNAL_KEY_enhanceBuildingBlocks as KEY_enhanceBuildingBlocks,
+  INTERNAL_KEY_ensureAtomState as KEY_ensureAtomState,
+  INTERNAL_KEY_flushCallbacks as KEY_flushCallbacks,
+  INTERNAL_KEY_invalidateDependents as KEY_invalidateDependents,
+  INTERNAL_KEY_invalidatedAtoms as KEY_invalidatedAtoms,
+  INTERNAL_KEY_mountAtom as KEY_mountAtom,
+  INTERNAL_KEY_mountCallbacks as KEY_mountCallbacks,
+  INTERNAL_KEY_mountDependencies as KEY_mountDependencies,
+  INTERNAL_KEY_mountedMap as KEY_mountedMap,
+  INTERNAL_KEY_readAtomState as KEY_readAtomState,
+  INTERNAL_KEY_recomputeInvalidatedAtoms as KEY_recomputeInvalidatedAtoms,
+  INTERNAL_KEY_registerAbortHandler as KEY_registerAbortHandler,
+  INTERNAL_KEY_setAtomStateValueOrPromise as KEY_setAtomStateValueOrPromise,
+  INTERNAL_KEY_storeEpochHolder as KEY_storeEpochHolder,
+  INTERNAL_KEY_storeGet as KEY_storeGet,
+  INTERNAL_KEY_storeHooks as KEY_storeHooks,
+  INTERNAL_KEY_storeSet as KEY_storeSet,
+  INTERNAL_KEY_storeSub as KEY_storeSub,
+  INTERNAL_KEY_unmountAtom as KEY_unmountAtom,
+  INTERNAL_KEY_unmountCallbacks as KEY_unmountCallbacks,
+  INTERNAL_KEY_writeAtomState as KEY_writeAtomState,
 } from 'jotai/vanilla/internals'
 
-const buildingBlockLength = 29
+const buildingBlockKeys: (keyof INTERNAL_BuildingBlocks)[] = [
+  KEY_atomStateMap,
+  KEY_mountedMap,
+  KEY_invalidatedAtoms,
+  KEY_changedAtoms,
+  KEY_mountCallbacks,
+  KEY_unmountCallbacks,
+  KEY_storeHooks,
+  KEY_atomRead,
+  KEY_atomWrite,
+  KEY_atomOnInit,
+  KEY_atomOnMount,
+  KEY_ensureAtomState,
+  KEY_flushCallbacks,
+  KEY_recomputeInvalidatedAtoms,
+  KEY_readAtomState,
+  KEY_invalidateDependents,
+  KEY_writeAtomState,
+  KEY_mountDependencies,
+  KEY_mountAtom,
+  KEY_unmountAtom,
+  KEY_setAtomStateValueOrPromise,
+  KEY_storeGet,
+  KEY_storeSet,
+  KEY_storeSub,
+  KEY_enhanceBuildingBlocks,
+  KEY_abortHandlersMap,
+  KEY_registerAbortHandler,
+  KEY_abortPromise,
+  KEY_storeEpochHolder,
+]
 
 describe('internals', () => {
-  it('should not return a sparse building blocks array', () => {
+  it('should return complete building blocks', () => {
     {
       const store = createStore()
       const buildingBlocks = INTERNAL_getBuildingBlocks(store)
@@ -27,6 +86,11 @@ describe('internals', () => {
       const buildingBlocks = INTERNAL_getBuildingBlocks(store)
       expect(isBuildingBlocks(buildingBlocks)).toBe(true)
     }
+  })
+
+  it('should export distinct single-char key constants', () => {
+    expect(buildingBlockKeys.every((key) => key.length === 1)).toBe(true)
+    expect(new Set(buildingBlockKeys).size).toBe(buildingBlockKeys.length)
   })
 
   it('internals should not hold stale references', () => {
@@ -46,16 +110,14 @@ describe('internals', () => {
       } as INTERNAL_AtomStateMap
     }
     const mockAtomStateMap1 = createMockAtomStateMap()
-    const buildingBlocks1: Partial<INTERNAL_BuildingBlocks> = [
-      mockAtomStateMap1,
-    ]
-    const store1 = INTERNAL_buildStore(...buildingBlocks1)
-    const buildingBlocks2 = [
-      ...INTERNAL_getBuildingBlocks(store1),
-    ] as INTERNAL_BuildingBlocks
+    const buildingBlocks1: Partial<INTERNAL_BuildingBlocks> = {
+      [KEY_atomStateMap]: mockAtomStateMap1,
+    }
+    const store1 = INTERNAL_buildStore(buildingBlocks1)
+    const buildingBlocks2 = { ...INTERNAL_getBuildingBlocks(store1) }
     const mockAtomStateMap2 = createMockAtomStateMap()
-    buildingBlocks2[0] = mockAtomStateMap2
-    const store2 = INTERNAL_buildStore(...buildingBlocks2)
+    buildingBlocks2[KEY_atomStateMap] = mockAtomStateMap2
+    const store2 = INTERNAL_buildStore(buildingBlocks2)
     store2.get(atom(0))
     expect(mockAtomStateMap1.get).not.toHaveBeenCalled()
     expect(mockAtomStateMap2.get).toHaveBeenCalled()
@@ -66,30 +128,32 @@ describe('internals', () => {
       internal: vi.fn(),
       external: vi.fn(),
     }
-    const bb0 = [] as Partial<INTERNAL_BuildingBlocks>
-    bb0[21] = function storeGet1() {
+    const bb0: Partial<INTERNAL_BuildingBlocks> = {}
+    bb0[KEY_storeGet] = function storeGet1() {
       didRun.internal()
-    } as INTERNAL_BuildingBlocks[21]
+    } as INTERNAL_BuildingBlocks[typeof KEY_storeGet]
     let bbInternal: Readonly<INTERNAL_BuildingBlocks> | undefined
     function storeGet() {
       didRun.external()
     }
-    bb0[24] = (bbi) => {
+    bb0[KEY_enhanceBuildingBlocks] = (bbi) => {
       bbInternal = bbi
-      const bb1 = [...bbi] as INTERNAL_BuildingBlocks
-      bb1[21] = storeGet as INTERNAL_BuildingBlocks[21]
-      return bb1
+      return {
+        ...bbi,
+        [KEY_storeGet]:
+          storeGet as INTERNAL_BuildingBlocks[typeof KEY_storeGet],
+      }
     }
-    const store1 = INTERNAL_buildStore(...bb0)
+    const store1 = INTERNAL_buildStore(bb0)
     const bb1 = INTERNAL_getBuildingBlocks(store1)
     expect(isBuildingBlocks(bb1)).toBe(true)
     expect(isBuildingBlocks(bbInternal)).toBe(true)
-    const store2 = INTERNAL_buildStore(...bb1)
+    const store2 = INTERNAL_buildStore(bb1)
     const bb2 = INTERNAL_getBuildingBlocks(store2)
     expect(isBuildingBlocks(bb2)).toBe(true)
     expect(isBuildingBlocks(bbInternal)).toBe(true)
-    expect(bb0[21]).not.toBe(bb1[21])
-    expect(bb1[21]).toBe(bb2[21])
+    expect(bb0[KEY_storeGet]).not.toBe(bb1[KEY_storeGet])
+    expect(bb1[KEY_storeGet]).toBe(bb2[KEY_storeGet])
     store1.get(atom(0))
     expect(didRun.internal).toHaveBeenCalledTimes(1)
     expect(didRun.external).toHaveBeenCalledTimes(0)
@@ -115,10 +179,13 @@ describe('internals', () => {
     }
     ;[...deps, derivedAtom].forEach(wrapRead)
     const rawBlocks = INTERNAL_getBuildingBlocks(INTERNAL_buildStore())
-    const buildingBlocks = [...rawBlocks] as INTERNAL_BuildingBlocks
-    const ras = vi.fn(buildingBlocks[14])
-    buildingBlocks[14] = ras as (typeof buildingBlocks)[14]
-    const store = INTERNAL_buildStore(...buildingBlocks)
+    const ras = vi.fn(rawBlocks[KEY_readAtomState])
+    const buildingBlocks = {
+      ...rawBlocks,
+      [KEY_readAtomState]:
+        ras as INTERNAL_BuildingBlocks[typeof KEY_readAtomState],
+    }
+    const store = INTERNAL_buildStore(buildingBlocks)
     console.time('store.get')
     store.get(derivedAtom) // does a deep scan of atom dependencies
     console.timeEnd('store.get')
@@ -160,10 +227,13 @@ describe('internals', () => {
       wrapRead,
     )
     const rawBlocks = INTERNAL_getBuildingBlocks(INTERNAL_buildStore())
-    const buildingBlocks = [...rawBlocks] as INTERNAL_BuildingBlocks
-    const ras = vi.fn(buildingBlocks[14])
-    buildingBlocks[14] = ras as (typeof buildingBlocks)[14]
-    const store = INTERNAL_buildStore(...buildingBlocks)
+    const ras = vi.fn(rawBlocks[KEY_readAtomState])
+    const buildingBlocks = {
+      ...rawBlocks,
+      [KEY_readAtomState]:
+        ras as INTERNAL_BuildingBlocks[typeof KEY_readAtomState],
+    }
+    const store = INTERNAL_buildStore(buildingBlocks)
 
     store.get(derivedAtom1)
     store.get(derivedAtom2)
@@ -204,9 +274,10 @@ describe('internals', () => {
       } as INTERNAL_InvalidatedAtoms
     })()
 
-    const partialBuildingBlocks: Partial<INTERNAL_BuildingBlocks> = []
-    partialBuildingBlocks[2] = invalidatedAtoms
-    const store = INTERNAL_buildStore(...partialBuildingBlocks)
+    const partialBuildingBlocks: Partial<INTERNAL_BuildingBlocks> = {
+      [KEY_invalidatedAtoms]: invalidatedAtoms,
+    }
+    const store = INTERNAL_buildStore(partialBuildingBlocks)
 
     const baseAtom = atom(0)
     const midAtom1 = atom((get) => get(baseAtom))
@@ -215,7 +286,7 @@ describe('internals', () => {
 
     const unsub = store.sub(leafAtom, () => {})
     const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-    const invalidateDependents = buildingBlocks[15]
+    const invalidateDependents = buildingBlocks[KEY_invalidateDependents]
     expect(() =>
       invalidateDependents(buildingBlocks, store, baseAtom),
     ).not.toThrow()
@@ -285,9 +356,7 @@ describe('store hooks', () => {
   // Helper function to create store with hooks
   const createStoreWithHooks = () => {
     const storeHooks = INTERNAL_initializeStoreHooks({})
-    const buildingBlocks = [] as Partial<INTERNAL_BuildingBlocks>
-    buildingBlocks[6] = storeHooks
-    const store = INTERNAL_buildStore(...buildingBlocks)
+    const store = INTERNAL_buildStore({ [KEY_storeHooks]: storeHooks })
     return { store, storeHooks }
   }
 
@@ -386,15 +455,13 @@ describe('store hooks', () => {
   })
 })
 
-function isSparse(arr: ReadonlyArray<unknown>) {
-  return arr.some((_, i) => !Object.prototype.hasOwnProperty.call(arr, i))
-}
-
-function isBuildingBlocks(blocks: ReadonlyArray<unknown> | undefined) {
+function isBuildingBlocks(blocks: object | undefined) {
   return (
     blocks !== undefined &&
-    blocks.length === buildingBlockLength &&
-    isSparse(blocks) === false
+    Object.keys(blocks).length === buildingBlockKeys.length &&
+    buildingBlockKeys.every((key) =>
+      Object.prototype.hasOwnProperty.call(blocks, key),
+    )
   )
 }
 
