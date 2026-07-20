@@ -25,4 +25,4 @@ jobs:
           package-manager-cache: false
       - run: pnpm install
       - run: pnpm run build
-      - run: pnpm publish --no-git-checks
+      - run: pnpm publish --no-git-checks --tag next
