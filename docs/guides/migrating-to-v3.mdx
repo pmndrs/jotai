@@ -7,9 +7,14 @@ nav: 8.01
 Roadmap: https://github.com/pmndrs/jotai/discussions/2889
 
 Jotai v3 focuses on modernizing the package.
-The core API and its behavior are unchanged.
+The public API is unchanged: `useAtom`, `useAtomValue` and `useSetAtom`
+keep the same signatures and the same behavior for the vast majority of use cases.
 If your app runs on Jotai v2 without deprecation warnings,
 it should run on v3 as is.
+
+There is one subtle timing change worth knowing about, see
+[useAtomValue: a subtle mount-timing change](../core/use-atom.mdx#a-subtle-mount-timing-change-in-v3)
+below.
 
 ### Requirement changes
 
@@ -170,9 +175,18 @@ function useAtomValueWithDelay(anAtom, { delay }) {
 
 ### New hooks for advanced users
 
-v3 adds [useAtomValueRaw](../core/use-atom.mdx#useatomvalueraw)
-and [useAtomValueRawSync](../core/use-atom.mdx#useatomvaluerawsync),
-which don't resolve promises.
-They are not required for migration,
-but they are escape hatches when the default `useAtomValue` behavior
-with async atoms doesn't fit your use case.
+React 19 introduces `React.use()`, letting a component suspend by reading a
+promise during render. `useAtomValue` uses it when available, and falls back
+to the previous behavior on React 18. Splitting that logic out enables two
+lower-level hooks:
+
+- [`useAtomValueRaw`](../core/use-atom.mdx#useatomvalueraw): like
+  `useAtomValue`, but it never suspends. An async atom's value is returned
+  as a promise, as-is.
+- [`useAtomValueRawSync`](../core/use-atom.mdx#useatomvaluerawsync): the same
+  idea, built on `useSyncExternalStore`. It trades concurrent rendering for
+  no tearing and no missed update around mount.
+
+You don't need either hook to migrate. `useAtomValue` keeps working as the
+default choice. See [Choosing a hook](../core/use-atom.mdx#choosing-a-hook)
+for when to reach for them.
