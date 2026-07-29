@@ -182,7 +182,7 @@ lower-level hooks:
 
 - [`useAtomValueRaw`](../core/use-atom.mdx#useatomvalueraw): like
   `useAtomValue`, but it never suspends. An async atom's value is returned
-  as a promise, as-is.
+  without being consumed through React's `use()`.
 - [`useAtomValueRawSync`](../core/use-atom.mdx#useatomvaluerawsync): the same
   idea, built on `useSyncExternalStore`. It trades concurrent rendering for
   no tearing and no missed update around mount.

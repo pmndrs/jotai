@@ -150,7 +150,7 @@ const Counter = () => {
 
 `useAtomValueRaw` is like `useAtomValue`, but it doesn't resolve promises: the value of an async atom is returned as a promise, and the component never suspends. It subscribes to the store in an effect, so it doesn't cause an extra re-render on initial mount. As a trade-off, a value change that happens between the initial render and the subscription is not picked up until the next change.
 
-> "Raw" means without React's `use()`: an async atom's value is still its own promise, untransformed.
+> "Raw" means the promise is returned without being consumed through React's `use()`.
 
 ## useAtomValueRawSync
 
