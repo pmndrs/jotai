@@ -2,8 +2,16 @@
 title: useAtom
 description: This doc describes core `jotai` bundle.
 nav: 2.02
-keywords: use,useatom,useatomvalue,usesetatom,atomvalue,setatom
+keywords: use,useatom,useatomvalue,useatomvalueraw,useatomvaluerawsync,usesetatom,atomvalue,setatom
 ---
+
+## Choosing a hook
+
+- Read and write an atom: `useAtom`
+- Read an atom's value: `useAtomValue`
+- Write an atom without reading it (avoids re-renders): `useSetAtom`
+- Read without suspending on async atoms: `useAtomValueRaw`
+- Same, with no risk of missing an update: `useAtomValueRawSync`
 
 ## useAtom
 
@@ -119,6 +127,14 @@ const Counter = () => {
 
 Similar to the `useSetAtom` hook, `useAtomValue` allows you to access a read-only atom. Nonetheless, it can also be used to access read-write atom's values.
 
+Under the hood, `useAtomValue` is [`useAtomValueRaw`](#useatomvalueraw) plus React's `use()`: it resolves promises and suspends, instead of returning them as-is.
+
+### A subtle mount-timing change in v3
+
+In v2, `useAtomValue` always re-rendered once right after mounting, even without a value change. This caught updates that happened between the initial render and the subscription, for example a value written by a child's `useEffect` (which runs before the parent's).
+
+In v3, that extra render is gone: `useAtomValue` only re-renders on an actual change. It's faster, but it can miss that specific kind of update until the next one. Use [`useAtomValueRawSync`](#useatomvaluerawsync) if you need to catch it.
+
 ## useAtomValueRaw
 
 ⚠️ This hook is only available since Jotai v3, and it's intended for advanced users.
@@ -134,6 +150,8 @@ const Counter = () => {
 
 `useAtomValueRaw` is like `useAtomValue`, but it doesn't resolve promises: the value of an async atom is returned as a promise, and the component never suspends. It subscribes to the store in an effect, so it doesn't cause an extra re-render on initial mount. As a trade-off, a value change that happens between the initial render and the subscription is not picked up until the next change.
 
+> "Raw" means the promise is returned without being consumed through React's `use()`.
+
 ## useAtomValueRawSync
 
 ⚠️ This hook is only available since Jotai v3, and it's intended for advanced users.
@@ -148,6 +166,8 @@ const Counter = () => {
 ```
 
 `useAtomValueRawSync` has the same signature as `useAtomValueRaw` and doesn't resolve promises either, but it's implemented with `useSyncExternalStore`. It avoids tearing and picks up values written during mount. As a trade-off, updates are always rendered synchronously without taking advantage of concurrent rendering features.
+
+> "Sync" refers to `useSyncExternalStore`: rendering is always synchronous, with no concurrent-rendering support.
 
 ## useSetAtom
 

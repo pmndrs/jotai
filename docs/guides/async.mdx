@@ -38,7 +38,7 @@ const App = () => {
 }
 ```
 
-Alternatively, you could avoid the inherent suspending that Jotai does for you, by wrapping your atoms with the [`loadable` API](../utilities/async.mdx).
+Alternatively, you could avoid the inherent suspending that Jotai does for you, by wrapping your atoms with the [`loadable` API](../utilities/async.mdx#loadable), or by reading the atom with [`useAtomValueRaw`](../core/use-atom.mdx#useatomvalueraw) instead of `useAtomValue`.
 
 If another atom uses an async atom, it will return a promise. So, we need to make the atom also async.
 
