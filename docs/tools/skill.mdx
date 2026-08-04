@@ -1,0 +1,49 @@
+---
+title: Skill
+description: This doc describes the Jotai skill.
+nav: 6.05
+keywords: ai,agent,codex,claude,skill,skills
+---
+
+The skill helps coding agents write and review atom-based code. It can guide
+atom design, derived atoms, write-only action atoms, async atoms, Provider/store
+usage, render performance, TypeScript, tests, utilities, and extensions.
+
+⚠️ Note: Feedback is welcome in the [Github repo](https://github.com/jotaijs/jotai-skills). Please file issues in the separate repo instead of `jotai` repo.
+
+### Install
+
+Install it with:
+
+```sh
+npx skills add jotaijs/jotai-skills --skill jotai
+```
+
+Install it to a specific coding agent:
+
+```sh
+npx skills add jotaijs/jotai-skills --skill jotai --agent codex
+npx skills add jotaijs/jotai-skills --skill jotai --agent claude-code
+```
+
+Install it globally:
+
+```sh
+npx skills add jotaijs/jotai-skills --skill jotai --global
+```
+
+### Usage
+
+After installing, ask a Jotai-related question:
+
+```
+Review the form atom design.
+```
+
+```
+Refactor React Context state into atoms.
+```
+
+```
+Reduce unrelated atom rerenders.
+```
