@@ -196,7 +196,7 @@ describe('unwrap', () => {
     expect(() => store.get(syncAtom)).toThrow('boom')
   })
 
-
+  it('should update dependents with the value of the unwrapped atom when the promise resolves', async () => {
     const store = createStore()
     const asyncTarget = atom(() => Promise.resolve('value'))
     const target = unwrap(asyncTarget)
