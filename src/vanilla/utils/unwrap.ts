@@ -41,6 +41,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
       type PromiseAndValue = { readonly p?: PromiseLike<unknown> } & (
         | { readonly v: Awaited<Value> }
         | { readonly f: PendingValue; readonly v?: Awaited<Value> }
+        | { readonly e: unknown }
       )
       const promiseErrorCache = new WeakMap<PromiseLike<unknown>, unknown>()
       const promiseResultCache = new WeakMap<
@@ -89,7 +90,8 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
           )
         }
         if (promiseErrorCache.has(promise)) {
-          throw promiseErrorCache.get(promise)
+          if (prev && 'e' in prev && prev.p === promise) return prev
+          return { p: promise, e: promiseErrorCache.get(promise) }
         }
         if (promiseResultCache.has(promise)) {
           return {
@@ -112,6 +114,9 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
       return atom(
         (get) => {
           const state = get(promiseAndValueAtom)
+          if ('e' in state) {
+            throw state.e
+          }
           if ('f' in state) {
             // is pending
             return state.f

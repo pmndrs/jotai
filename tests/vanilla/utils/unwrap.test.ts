@@ -167,7 +167,36 @@ describe('unwrap', () => {
     expect(store.get(syncAtom)).toBe(3)
   })
 
-  it('should update dependents with the value of the unwrapped atom when the promise resolves', async () => {
+  // https://github.com/pmndrs/jotai/discussions/3362
+  it('should not enter an infinite loop when a rejected source recomputes', async () => {
+    const store = createStore()
+    const error = new Error('boom')
+
+    let rejectPending: (e: unknown) => void
+    const pending = new Promise<never>((_, reject) => {
+      rejectPending = reject
+    })
+    pending.catch(() => {}) // suppress unhandled rejection
+
+    const stageAtom = atom(0)
+    const sourceAtom = atom((get) => {
+      if (get(stageAtom) === 0) return pending
+      throw error
+    })
+    const asyncAtom = atom(async (get) => get(sourceAtom))
+    const syncAtom = unwrap(asyncAtom)
+
+    store.sub(syncAtom, () => {})
+    expect(store.get(syncAtom)).toBeUndefined()
+
+    store.set(stageAtom, 1)
+    rejectPending!(error)
+
+    await vi.advanceTimersByTimeAsync(100)
+    expect(() => store.get(syncAtom)).toThrow('boom')
+  })
+
+
     const store = createStore()
     const asyncTarget = atom(() => Promise.resolve('value'))
     const target = unwrap(asyncTarget)
