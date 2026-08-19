@@ -90,7 +90,9 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
           )
         }
         if (promiseErrorCache.has(promise)) {
-          if (prev && 'e' in prev && prev.p === promise) return prev
+          if (prev && 'e' in prev && prev.p === promise) {
+            return prev
+          }
           const e = promiseErrorCache.get(promise)
           if (prev && 'v' in prev) {
             return { p: promise, e, v: prev.v }
