@@ -167,6 +167,74 @@ describe('unwrap', () => {
     expect(store.get(syncAtom)).toBe(3)
   })
 
+  // https://github.com/pmndrs/jotai/discussions/3362
+  it('should not enter an infinite loop when a rejected source recomputes', async () => {
+    const store = createStore()
+    const error = new Error('boom')
+
+    let rejectPending: (e: unknown) => void
+    const pending = new Promise<never>((_, reject) => {
+      rejectPending = reject
+    })
+    pending.catch(() => {}) // suppress unhandled rejection
+
+    const stageAtom = atom(0)
+    const sourceAtom = atom((get) => {
+      if (get(stageAtom) === 0) return pending
+      throw error
+    })
+    const asyncAtom = atom(async (get) => get(sourceAtom))
+    const syncAtom = unwrap(asyncAtom)
+
+    store.sub(syncAtom, () => {})
+    expect(store.get(syncAtom)).toBeUndefined()
+
+    store.set(stageAtom, 1)
+    rejectPending!(error)
+
+    await vi.advanceTimersByTimeAsync(100)
+    expect(() => store.get(syncAtom)).toThrow('boom')
+  })
+
+  it('should pass the last value to fallback after an error state', async () => {
+    const store = createStore()
+
+    let resolveFirst: (v: number) => void
+    const first = new Promise<number>((resolve) => {
+      resolveFirst = resolve
+    })
+    let rejectSecond: (e: unknown) => void
+    const second = new Promise<number>((_, reject) => {
+      rejectSecond = reject
+    })
+    second.catch(() => {}) // suppress unhandled rejection
+    const third = new Promise<number>(() => {})
+
+    const stageAtom = atom(0)
+    const sourceAtom = atom((get) => [first, second, third][get(stageAtom)]!)
+    const fallbackArgs: Array<number | undefined> = []
+    const syncAtom = unwrap(sourceAtom, (prev) => {
+      fallbackArgs.push(prev)
+      return prev ?? -1
+    })
+
+    store.sub(syncAtom, () => {})
+    expect(store.get(syncAtom)).toBe(-1)
+    resolveFirst!(7)
+    await vi.advanceTimersByTimeAsync(100)
+    expect(store.get(syncAtom)).toBe(7)
+
+    store.set(stageAtom, 1)
+    rejectSecond!(new Error('boom'))
+    await vi.advanceTimersByTimeAsync(100)
+    expect(() => store.get(syncAtom)).toThrow('boom')
+
+    store.set(stageAtom, 2)
+    await vi.advanceTimersByTimeAsync(100)
+    expect(store.get(syncAtom)).toBe(7)
+    expect(fallbackArgs).toEqual([undefined, 7, 7])
+  })
+
   it('should update dependents with the value of the unwrapped atom when the promise resolves', async () => {
     const store = createStore()
     const asyncTarget = atom(() => Promise.resolve('value'))
