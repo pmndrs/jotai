@@ -220,11 +220,12 @@ Aside from mount events, the effect runs when any of its dependencies change val
   })
   const actionAtom = atom(null, (get, set) => {
     get(logAtom) // 'count is 0'
-    set(countAtom, (value) => value + 1) // effect runs synchronously
-    get(logAtom) // 'count is 1'
+    set(countAtom, (value) => value + 1)
+    get(logAtom) // 'count is 0' - the effect runs once the write function completes
   })
   store.sub(logCounts, () => {})
   store.set(actionAtom)
+  store.get(logAtom) // 'count is 1' - the effect ran before `store.set` returned
   ```
 
   </details>
