@@ -631,8 +631,11 @@ describe('atomWithStorage (with disabled browser storage)', () => {
   })
 
   afterAll(() => {
-    // TS < 4.5 causes type error without `as any`
-    ;(window as any).localStorage = savedLocalStorage
+    Object.defineProperty(window, 'localStorage', {
+      get() {
+        return savedLocalStorage
+      },
+    })
   })
 
   it('initial value of atomWithStorage can be used when cookies are disabled', () => {
