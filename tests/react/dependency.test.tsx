@@ -890,8 +890,7 @@ describe('glitch free', () => {
 it('should not call read function for unmounted atoms in StrictMode (#2076)', () => {
   const countAtom = atom(1)
   let firstDerivedFn:
-    | (((get: Getter) => number) & { mockClear: () => void })
-    | undefined
+    (((get: Getter) => number) & { mockClear: () => void }) | undefined
 
   const Component = () => {
     const memoizedAtomRef = useRef<Atom<number> | null>(null)

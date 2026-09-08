@@ -1028,8 +1028,7 @@ describe('with custom async storage', () => {
   it('does not infinite loop (#2931)', async () => {
     let storedValue = 0
     let cachedPromise:
-      | [typeof storedValue, Promise<typeof storedValue>]
-      | null = null
+      [typeof storedValue, Promise<typeof storedValue>] | null = null
     const counterAtom = atomWithStorage('counter', 0, {
       getItem(_key: string, _initialValue: number) {
         if (cachedPromise && cachedPromise[0] === storedValue) {

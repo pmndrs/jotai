@@ -19,9 +19,7 @@ type StringSubscribe = (
 ) => Unsubscribe | undefined
 
 type SetStateActionWithReset<Value> =
-  | Value
-  | typeof RESET
-  | ((prev: Value) => Value | typeof RESET)
+  Value | typeof RESET | ((prev: Value) => Value | typeof RESET)
 
 export interface AsyncStorage<Value> {
   getItem: (key: string, initialValue: Value) => PromiseLike<Value>
@@ -101,9 +99,7 @@ export function createJSONStorage<Value>(
 
 export function createJSONStorage<Value>(
   getStringStorage: () =>
-    | AsyncStringStorage
-    | SyncStringStorage
-    | undefined = () => {
+    AsyncStringStorage | SyncStringStorage | undefined = () => {
     try {
       return window.localStorage
     } catch (e) {

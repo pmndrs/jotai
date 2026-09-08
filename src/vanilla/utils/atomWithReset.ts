@@ -3,9 +3,7 @@ import type { WritableAtom } from '../../vanilla.js'
 import { RESET } from './constants.js'
 
 type SetStateActionWithReset<Value> =
-  | Value
-  | typeof RESET
-  | ((prev: Value) => Value | typeof RESET)
+  Value | typeof RESET | ((prev: Value) => Value | typeof RESET)
 
 // This is an internal type and not part of public API.
 // Do not depend on it as it can change without notice.
