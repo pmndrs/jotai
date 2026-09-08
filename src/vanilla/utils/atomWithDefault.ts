@@ -9,9 +9,7 @@ type Read<Value, Args extends unknown[], Result> = WritableAtom<
 >['read']
 
 type DefaultSetStateAction<Value> =
-  | Value
-  | typeof RESET
-  | ((prev: Value) => Value | typeof RESET)
+  Value | typeof RESET | ((prev: Value) => Value | typeof RESET)
 
 export function atomWithDefault<Value>(
   getDefault: Read<Value, [DefaultSetStateAction<Value>], void>,
