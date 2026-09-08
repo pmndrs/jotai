@@ -75,7 +75,7 @@
     "test:spec": "vitest run"
   },
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": ">=22.12.0"
   },
   "prettier": {
     "semi": false,
