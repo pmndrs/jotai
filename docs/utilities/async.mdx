@@ -8,6 +8,13 @@ All atoms support async behavior such as async read or async write. However ther
 
 ## loadable
 
+> In Jotai v3, `loadable` is no longer part of the core package.
+> See the [v3 migration guide](../guides/migrating-to-v3.mdx#loadable-util)
+> for a userland replacement built on `unwrap`.
+> Alternatively, [`useAtomValueRaw`](../core/use-atom.mdx#useatomvalueraw) and
+> [`useAtomValueRawSync`](../core/use-atom.mdx#useatomvaluerawsync) let you
+> read an async atom's value without suspending.
+
 If you don't want async atoms to suspend or throw to an error boundary (for example, for finer-grained control of loading and error logic), you can use the `loadable` util.
 
 It would work the same way for any atom. Simply wrap your atoms with the `loadable` util. It returns a value with one of three states: `loading`, `hasData` and `hasError`.

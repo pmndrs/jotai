@@ -1,5 +1,5 @@
-import { atom } from '../../vanilla.ts'
-import type { Atom } from '../../vanilla.ts'
+import { atom } from '../../vanilla.js'
+import type { Atom } from '../../vanilla.js'
 
 const getCached = <T>(c: () => T, m: WeakMap<object, unknown>, k: object): T =>
   (m.has(k) ? m : m.set(k, c())).get(k) as T

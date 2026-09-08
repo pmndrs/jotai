@@ -1,0 +1,192 @@
+---
+title: v3 migration
+description: How to migrate to Jotai v3
+nav: 8.01
+---
+
+Roadmap: https://github.com/pmndrs/jotai/discussions/2889
+
+Jotai v3 focuses on modernizing the package.
+The public API is unchanged: `useAtom`, `useAtomValue` and `useSetAtom`
+keep the same signatures and the same behavior for the vast majority of use cases.
+If your app runs on Jotai v2 without deprecation warnings,
+it should run on v3 as is.
+
+There is one subtle timing change worth knowing about, see
+[useAtomValue: a subtle mount-timing change](../core/use-atom.mdx#a-subtle-mount-timing-change-in-v3)
+below.
+
+### Requirement changes
+
+The minimum requirements are raised:
+
+- React 18 (v2 supports React 17)
+- TypeScript 5.5 (v2 supports TypeScript 3.8)
+- Node.js `^20.19.0 || >=22.12.0` (v2 supports Node.js 12.20)
+
+### Packaging changes
+
+#### ESM only
+
+The CJS, UMD and SystemJS builds are no longer provided.
+Modern bundlers work with the ESM build out of the box.
+The supported Node.js versions can load it
+even from CJS code with `require()`.
+
+The package `exports` only expose the public entry points:
+
+- `jotai`
+- `jotai/utils`
+- `jotai/vanilla`
+- `jotai/vanilla/utils`
+- `jotai/vanilla/internals`
+- `jotai/react`
+- `jotai/react/utils`
+
+Importing other files in the package directly no longer works.
+
+#### `process.env.NODE_ENV` is used directly
+
+The published files read `process.env.NODE_ENV` directly
+to omit development-only checks in production.
+Bundlers handle it by default.
+If you load Jotai in a browser without a bundler
+(for example, with import maps),
+you need to define it by yourself.
+
+```js
+globalThis.process ??= { env: { NODE_ENV: 'production' } }
+```
+
+#### ES2020 syntax
+
+The published files are compiled with the ES2020 target.
+If you need to support older browsers,
+transpile the package in your build.
+
+### Removed features
+
+#### `atomFamily` util
+
+It's moved to the `jotai-family` package.
+
+##### Previous API
+
+```js
+import { atomFamily } from 'jotai/utils'
+```
+
+##### New API
+
+```js
+// npm install jotai-family
+import { atomFamily } from 'jotai-family'
+```
+
+#### `loadable` util
+
+Use the `unwrap` util instead.
+The previous behavior can be implemented in userland:
+
+```js
+import { atom } from 'jotai'
+import { unwrap } from 'jotai/utils'
+
+function loadable(anAtom) {
+  const LOADING = { state: 'loading' }
+  const unwrappedAtom = unwrap(anAtom, () => LOADING)
+  return atom((get) => {
+    try {
+      const data = get(unwrappedAtom)
+      if (data === LOADING) {
+        return LOADING
+      }
+      return { state: 'hasData', data }
+    } catch (error) {
+      return { state: 'hasError', error }
+    }
+  })
+}
+```
+
+#### `jotai/babel` plugins
+
+They are moved to the `jotai-babel` package.
+
+##### Previous API
+
+```js
+// babel config
+plugins: ['jotai/babel/plugin-react-refresh']
+```
+
+##### New API
+
+```js
+// npm install jotai-babel
+plugins: ['jotai-babel/plugin-react-refresh']
+```
+
+#### `setSelf` option in the read function
+
+##### Previous API
+
+```js
+const anAtom = atom(async (get, { setSelf }) => {
+  // ...
+})
+```
+
+##### New API
+
+There is no direct replacement.
+Depending on the use case,
+`onMount` or [jotai-effect](https://github.com/jotaijs/jotai-effect)
+would cover it.
+
+#### `delay` option in `useAtom` and `useAtomValue`
+
+##### Previous API
+
+```js
+const value = useAtomValue(anAtom, { delay: 100 })
+```
+
+##### New API
+
+Create a custom hook:
+
+```js
+import { useEffect, useState } from 'react'
+import { useStore } from 'jotai'
+
+function useAtomValueWithDelay(anAtom, { delay }) {
+  const store = useStore()
+  const [value, setValue] = useState(() => store.get(anAtom))
+  useEffect(() => {
+    const unsub = store.sub(anAtom, () => {
+      setTimeout(() => setValue(store.get(anAtom)), delay)
+    })
+    return unsub
+  }, [store, anAtom, delay])
+  return value
+}
+```
+
+### New hooks for advanced users
+
+React 19 introduces `React.use()`, letting a component suspend by reading a
+promise during render. `useAtomValue` uses it when available, and falls back
+to the previous behavior on React 18. Splitting that logic out enables two
+lower-level hooks:
+
+- [`useAtomValueRaw`](../core/use-atom.mdx#useatomvalueraw): like
+  `useAtomValue`, but it never suspends. An async atom's value is returned
+  without being consumed through React's `use()`.
+- [`useAtomValueRawSync`](../core/use-atom.mdx#useatomvaluerawsync): the same
+  idea, built on `useSyncExternalStore`. It trades concurrent rendering for
+  no tearing and no missed update around mount.
+
+You don't need either hook to migrate. `useAtomValue` keeps working as the
+default choice. See [Choosing a hook](../core/use-atom.mdx#choosing-a-hook)
+for when to reach for them.

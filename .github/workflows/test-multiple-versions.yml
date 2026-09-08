@@ -16,8 +16,6 @@ jobs:
       fail-fast: false
       matrix:
         react:
-          - 16.14.0
-          - 17.0.0
           - 18.0.0
           - 18.1.0
           - 18.2.0
@@ -37,22 +35,6 @@ jobs:
           node-version: 'lts/*'
           cache: 'pnpm'
       - run: pnpm install
-      - name: Install legacy testing-library
-        if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
-        run: |
-          pnpm add -D @testing-library/react@12.1.4
-      - name: Patch for React 17
-        if: ${{ startsWith(matrix.react, '17.') }}
-        run: |
-          pnpm add -D vitest@3.2.4
-      - name: Patch for React 16
-        if: ${{ startsWith(matrix.react, '16.') }}
-        run: |
-          sed -i~ '1s/^/import React from "react";/' tests/*/*.tsx tests/*/*/*.tsx
-          sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' tsconfig.json
-          sed -i~ 's/import\.meta\.env[?]\.MODE/"DEVELOPMENT".toLowerCase()/' src/*.ts src/*/*.ts src/*/*/*.ts
-      - name: Test Build # we need to build for babel tests
-        run: pnpm run build
       - name: Test ${{ matrix.react }}
         run: |
           pnpm add -D react@$REACT_VER react-dom@$REACT_VER

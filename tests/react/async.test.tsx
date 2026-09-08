@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
-import { sleep, useCommitCount } from '../test-utils'
+import { sleep, useCommitCount } from '../test-utils.js'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -72,8 +72,7 @@ it('does not show async stale result', async () => {
   expect(screen.getByText('delayedCount: 2')).toBeInTheDocument()
 
   // React 18+ uses automatic batching, so committed is [0, 2]
-  // React 16-17 doesn't batch async updates, so committed is [0, 1, 2]
-  // Different build types (cjs, umd, esm) may also affect batching behavior
+  // Different test environments may affect batching behavior
   expect(committed.length).toBeGreaterThanOrEqual(2)
   expect(committed[0]).toBe(0)
   expect(committed[committed.length - 1]).toBe(2)

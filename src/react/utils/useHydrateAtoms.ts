@@ -1,5 +1,7 @@
-import { useStore } from '../../react.ts'
-import { type WritableAtom } from '../../vanilla.ts'
+'use client'
+
+import { useStore } from '../../react.js'
+import { type WritableAtom } from '../../vanilla.js'
 
 type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0] & {

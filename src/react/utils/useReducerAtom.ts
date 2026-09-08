@@ -1,6 +1,8 @@
+'use client'
+
 import { useCallback } from 'react'
-import { useAtom } from '../../react.ts'
-import type { PrimitiveAtom } from '../../vanilla.ts'
+import { useAtom } from '../../react.js'
+import type { PrimitiveAtom } from '../../vanilla.js'
 
 type Options = Parameters<typeof useAtom>[1]
 
@@ -29,7 +31,7 @@ export function useReducerAtom<Value, Action>(
   reducer: (v: Value, a: Action) => Value,
   options?: Options,
 ) {
-  if (import.meta.env?.MODE !== 'production') {
+  if (process.env.NODE_ENV !== 'production') {
     console.warn(
       '[DEPRECATED] useReducerAtom is deprecated and will be removed in the future. Please create your own version using the recipe. https://github.com/pmndrs/jotai/pull/2467',
     )

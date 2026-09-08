@@ -1,5 +1,5 @@
-import { atom } from '../../vanilla.ts'
-import type { Atom, WritableAtom } from '../../vanilla.ts'
+import { atom } from '../../vanilla.js'
+import type { Atom, WritableAtom } from '../../vanilla.js'
 
 const getCached = <T>(c: () => T, m: WeakMap<object, unknown>, k: object): T =>
   (m.has(k) ? m : m.set(k, c())).get(k) as T
@@ -56,7 +56,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
         ])
       }
 
-      if (import.meta.env?.MODE !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
         refreshAtom.debugPrivate = true
         triggerRefreshAtom.debugPrivate = true
       }
@@ -113,7 +113,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
       // HACK to read PromiseAndValue atom before initialization
       promiseAndValueAtom.init = undefined
 
-      if (import.meta.env?.MODE !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
         promiseAndValueAtom.debugPrivate = true
       }
 

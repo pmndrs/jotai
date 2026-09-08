@@ -5,8 +5,12 @@ import { describe, expect, it, vi } from 'vitest'
 import { atom } from 'jotai/vanilla'
 import type { Atom, WritableAtom } from 'jotai/vanilla'
 import {
-  INTERNAL_buildStoreRev3 as INTERNAL_buildStore,
-  INTERNAL_initializeStoreHooksRev3 as INTERNAL_initializeStoreHooks,
+  INTERNAL_buildStoreRev4 as INTERNAL_buildStore,
+  INTERNAL_initializeStoreHooksRev4 as INTERNAL_initializeStoreHooks,
+  INTERNAL_KEY_atomStateMap as KEY_atomStateMap,
+  INTERNAL_KEY_atomWrite as KEY_atomWrite,
+  INTERNAL_KEY_mountedMap as KEY_mountedMap,
+  INTERNAL_KEY_storeHooks as KEY_storeHooks,
 } from 'jotai/vanilla/internals'
 import type {
   INTERNAL_AtomState,
@@ -26,22 +30,17 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
   const storeHooks = INTERNAL_initializeStoreHooks({})
   const atomStateMap = new WeakMap()
   const mountedAtoms = new WeakMap()
-  const store = INTERNAL_buildStore(
-    atomStateMap,
-    mountedAtoms,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    storeHooks,
-    undefined,
-    (_buildingBlocks, _store, atom, get, set, ...args) => {
+  const store = INTERNAL_buildStore({
+    [KEY_atomStateMap]: atomStateMap,
+    [KEY_mountedMap]: mountedAtoms,
+    [KEY_storeHooks]: storeHooks,
+    [KEY_atomWrite]: (_buildingBlocks, _store, atom, get, set, ...args) => {
       if (inRestoreAtom) {
         return set(atom, ...(args as any))
       }
       return atom.write(get, set, ...(args as any))
     },
-  )
+  })
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
     debugMountedAtoms.add(atom)

@@ -5,7 +5,7 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { add, complete, cycle, save, suite } from 'benny'
-import { atom } from '../src/vanilla/atom.ts'
+import { atom } from '../src/vanilla/atom.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 

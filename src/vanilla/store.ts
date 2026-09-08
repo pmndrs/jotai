@@ -1,5 +1,5 @@
-import { INTERNAL_buildStoreRev3 as INTERNAL_buildStore } from './internals.ts'
-import type { INTERNAL_Store } from './internals.ts'
+import { INTERNAL_buildStoreRev4 as INTERNAL_buildStore } from './internals.js'
+import type { INTERNAL_Store } from './internals.js'
 
 export type Store = INTERNAL_Store
 
@@ -23,7 +23,7 @@ let defaultStore: Store | undefined
 export function getDefaultStore(): Store {
   if (!defaultStore) {
     defaultStore = createStore()
-    if (import.meta.env?.MODE !== 'production') {
+    if (process.env.NODE_ENV !== 'production') {
       ;(
         globalThis as { __JOTAI_DEFAULT_STORE__?: unknown }
       ).__JOTAI_DEFAULT_STORE__ ||= defaultStore

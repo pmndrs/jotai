@@ -1,9 +1,9 @@
-import ReactExports, { StrictMode, Suspense, useEffect } from 'react'
+import { StrictMode, Suspense, useEffect, useTransition } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
-import { sleep } from '../test-utils'
+import { sleep } from '../test-utils.js'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -13,9 +13,7 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-const { useTransition } = ReactExports
-
-describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
+describe('useTransition', () => {
   it('no extra commit with useTransition (#1125)', async () => {
     const countAtom = atom(0)
     const delayedAtom = atom(async (get) => {

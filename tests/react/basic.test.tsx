@@ -1,18 +1,10 @@
-import {
-  StrictMode,
-  Suspense,
-  version as reactVersion,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { StrictMode, Suspense, useEffect, useMemo, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { unstable_batchedUpdates } from 'react-dom'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { useAtom } from 'jotai/react'
+import { useAtom, useAtomValueRawSync, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
-import { sleep, useCommitCount } from '../test-utils'
+import { sleep, useCommitCount } from '../test-utils.js'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -21,16 +13,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
 })
-
-const IS_REACT18 = /^18\./.test(reactVersion)
-
-const batchedUpdates = (fn: () => void) => {
-  if (IS_REACT18) {
-    fn()
-  } else {
-    unstable_batchedUpdates(fn)
-  }
-}
 
 it('uses a primitive atom', () => {
   const countAtom = atom(0)
@@ -350,9 +332,7 @@ it('uses atoms with tree dependencies', async () => {
     (get) => get(topAtom),
     async (get, set, update: (prev: number) => number) => {
       await sleep(100)
-      batchedUpdates(() => {
-        set(topAtom, update(get(topAtom)))
-      })
+      set(topAtom, update(get(topAtom)))
     },
   )
 
@@ -522,7 +502,8 @@ it('can write an atom value on useEffect in children', async () => {
   }
 
   const Counter = () => {
-    const [count, setCount] = useAtom(countAtom)
+    const count = useAtomValueRawSync(countAtom)
+    const setCount = useSetAtom(countAtom)
     return (
       <div>
         count: {count}
@@ -939,8 +920,8 @@ it('chained derive atom with onMount and useEffect (#897)', () => {
   }))
 
   const Counter = () => {
-    const [, setCount] = useAtom(countAtom)
-    const [{ count }] = useAtom(derivedObjectAtom)
+    const setCount = useSetAtom(countAtom)
+    const { count } = useAtomValueRawSync(derivedObjectAtom)
     useEffect(() => {
       setCount(1)
     }, [setCount])

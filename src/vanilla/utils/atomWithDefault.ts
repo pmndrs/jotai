@@ -1,6 +1,6 @@
-import { atom } from '../../vanilla.ts'
-import type { WritableAtom } from '../../vanilla.ts'
-import { RESET } from './constants.ts'
+import { atom } from '../../vanilla.js'
+import type { WritableAtom } from '../../vanilla.js'
+import { RESET } from './constants.js'
 
 type Read<Value, Args extends unknown[], Result> = WritableAtom<
   Value,
@@ -19,7 +19,7 @@ export function atomWithDefault<Value>(
   const EMPTY = Symbol()
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
 
-  if (import.meta.env?.MODE !== 'production') {
+  if (process.env.NODE_ENV !== 'production') {
     overwrittenAtom.debugPrivate = true
   }
 

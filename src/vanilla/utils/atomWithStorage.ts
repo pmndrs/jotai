@@ -1,6 +1,6 @@
-import { atom } from '../../vanilla.ts'
-import type { WritableAtom } from '../../vanilla.ts'
-import { RESET } from './constants.ts'
+import { atom } from '../../vanilla.js'
+import type { WritableAtom } from '../../vanilla.js'
+import { RESET } from './constants.js'
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
   typeof (x as PromiseLike<unknown>)?.then === 'function'
@@ -107,7 +107,7 @@ export function createJSONStorage<Value>(
     try {
       return window.localStorage
     } catch (e) {
-      if (import.meta.env?.MODE !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
         if (typeof window !== 'undefined') {
           console.warn(e)
         }
@@ -230,7 +230,7 @@ export function atomWithStorage<Value>(
       : initialValue,
   )
 
-  if (import.meta.env?.MODE !== 'production') {
+  if (process.env.NODE_ENV !== 'production') {
     baseAtom.debugPrivate = true
   }
 

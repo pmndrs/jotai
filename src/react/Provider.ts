@@ -1,6 +1,8 @@
+'use client'
+
 import { createContext, createElement, useContext, useRef } from 'react'
 import type { FunctionComponent, ReactElement, ReactNode } from 'react'
-import { createStore, getDefaultStore } from '../vanilla.ts'
+import { createStore, getDefaultStore } from '../vanilla.js'
 
 type Store = ReturnType<typeof createStore>
 

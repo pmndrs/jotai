@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atomWithRefresh } from 'jotai/vanilla/utils'
-import { sleep } from '../../test-utils'
+import { sleep } from '../../test-utils.js'
 
 beforeEach(() => {
   vi.useFakeTimers()

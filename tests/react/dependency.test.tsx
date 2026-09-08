@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom, Getter } from 'jotai/vanilla'
-import { useCommitCount } from '../test-utils'
+import { useCommitCount } from '../test-utils.js'
 
 beforeEach(() => {
   vi.useFakeTimers()

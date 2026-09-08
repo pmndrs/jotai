@@ -2,12 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 import {
-  INTERNAL_buildStoreRev3 as INTERNAL_buildStore,
-  INTERNAL_getBuildingBlocksRev3 as INTERNAL_getBuildingBlocks,
-  INTERNAL_initializeStoreHooksRev3 as INTERNAL_initializeStoreHooks,
+  INTERNAL_buildStoreRev4 as INTERNAL_buildStore,
+  INTERNAL_getBuildingBlocksRev4 as INTERNAL_getBuildingBlocks,
+  INTERNAL_initializeStoreHooksRev4 as INTERNAL_initializeStoreHooks,
+  INTERNAL_KEY_atomStateMap as KEY_atomStateMap,
+  INTERNAL_KEY_storeHooks as KEY_storeHooks,
 } from 'jotai/vanilla/internals'
 import type { INTERNAL_Store } from 'jotai/vanilla/internals'
-import { sleep } from '../test-utils'
+import { sleep } from '../test-utils.js'
 
 let savedConsoleWarn: typeof console.warn
 
@@ -28,15 +30,7 @@ type DevStore = {
 
 const createDevStore = (): INTERNAL_Store & DevStore => {
   const storeHooks = INTERNAL_initializeStoreHooks({})
-  const store = INTERNAL_buildStore(
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    storeHooks,
-  )
+  const store = INTERNAL_buildStore({ [KEY_storeHooks]: storeHooks })
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
     debugMountedAtoms.add(atom)
@@ -50,15 +44,19 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
   return Object.assign(store, devStore)
 }
 
-type AtomStateMapType = ReturnType<typeof INTERNAL_getBuildingBlocks>[0]
+type AtomStateMapType = ReturnType<
+  typeof INTERNAL_getBuildingBlocks
+>[typeof KEY_atomStateMap]
 
 const deriveStore = (
   store: ReturnType<typeof createStore>,
   enhanceAtomStateMap: (atomStateMap: AtomStateMapType) => AtomStateMapType,
 ): ReturnType<typeof createStore> => {
   const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-  const atomStateMap = buildingBlocks[0]
-  const derivedStore = INTERNAL_buildStore(enhanceAtomStateMap(atomStateMap))
+  const atomStateMap = buildingBlocks[KEY_atomStateMap]
+  const derivedStore = INTERNAL_buildStore({
+    [KEY_atomStateMap]: enhanceAtomStateMap(atomStateMap),
+  })
   return derivedStore
 }
 
@@ -393,11 +391,11 @@ it('resolves dependencies reliably after a delay (#2192)', async () => {
     return count
   })
   const derivedAtom = atom(
-    async (get, { setSelf }) => {
+    async (get) => {
       get(countAtom)
       await sleep(50)
       result = await get(asyncAtom)
-      if (result === 2) setSelf() // <-- necessary
+      if (result === 2) store.set(derivedAtom) // <-- necessary
     },
     () => {},
   )
@@ -768,39 +766,6 @@ describe('should mount and trigger listeners even when an error is thrown', () =
     expect(e.onMount).toHaveBeenCalledOnce()
   })
 
-  it('in read setSelf', async () => {
-    const store = createStore()
-    const a = atom(0)
-    const e = atom(
-      () => {
-        throw new Error('error')
-      },
-      () => {},
-    )
-    const b = atom(
-      (_, { setSelf }) => {
-        setTimeout(() => {
-          try {
-            setSelf()
-          } catch {
-            // expect error
-          }
-        })
-      },
-      (get, set) => {
-        set(a, 1)
-        get(e)
-      },
-    )
-    const listener = vi.fn()
-
-    store.sub(a, listener)
-    store.sub(b, () => {})
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(listener).toHaveBeenCalledOnce()
-  })
-
   it('in read promise on settled', async () => {
     const store = createStore()
     const a = atom(0)
@@ -1134,6 +1099,32 @@ it('should process all atom listeners even if some of them throw errors', () => 
   expect(listenerA).toHaveBeenCalledTimes(1)
   expect(listenerB).toHaveBeenCalledTimes(1)
   expect(listenerC).toHaveBeenCalledTimes(1)
+})
+
+it('throws listener errors without AggregateError support', () => {
+  vi.stubGlobal('AggregateError', undefined)
+  try {
+    const store = createStore()
+    const a = atom(0)
+    const error1 = new Error('error1')
+    const error2 = new Error('error2')
+    store.sub(a, () => {
+      throw error1
+    })
+    store.sub(a, () => {
+      throw error2
+    })
+    let thrown: unknown
+    try {
+      store.set(a, 1)
+    } catch (e) {
+      thrown = e
+    }
+    expect(thrown).toBeInstanceOf(Error)
+    expect((thrown as { errors: unknown[] }).errors).toEqual([error1, error2])
+  } finally {
+    vi.unstubAllGlobals()
+  }
 })
 
 it('should call onInit only once per atom', () => {

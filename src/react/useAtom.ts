@@ -1,3 +1,5 @@
+'use client'
+
 import type {
   Atom,
   ExtractAtomArgs,
@@ -6,9 +8,9 @@ import type {
   PrimitiveAtom,
   SetStateAction,
   WritableAtom,
-} from '../vanilla.ts'
-import { useAtomValue } from './useAtomValue.ts'
-import { useSetAtom } from './useSetAtom.ts'
+} from '../vanilla.js'
+import { useAtomValue } from './useAtomValue.js'
+import { useSetAtom } from './useSetAtom.js'
 
 type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
 

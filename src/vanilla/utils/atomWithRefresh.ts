@@ -1,5 +1,5 @@
-import { atom } from '../../vanilla.ts'
-import type { WritableAtom } from '../../vanilla.ts'
+import { atom } from '../../vanilla.js'
+import type { WritableAtom } from '../../vanilla.js'
 
 type Read<Value, Args extends unknown[], Result> = WritableAtom<
   Value,
@@ -26,7 +26,7 @@ export function atomWithRefresh<Value, Args extends unknown[], Result>(
   write?: Write<Value, Args, Result>,
 ) {
   const refreshAtom = atom(0)
-  if (import.meta.env?.MODE !== 'production') {
+  if (process.env.NODE_ENV !== 'production') {
     refreshAtom.debugPrivate = true
   }
   return atom(
@@ -39,7 +39,7 @@ export function atomWithRefresh<Value, Args extends unknown[], Result>(
         set(refreshAtom, (c) => c + 1)
       } else if (write) {
         return write(get, set, ...args)
-      } else if (import.meta.env?.MODE !== 'production') {
+      } else if (process.env.NODE_ENV !== 'production') {
         throw new Error('refresh must be called without arguments')
       }
     },

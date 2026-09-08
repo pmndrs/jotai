@@ -1,7 +1,9 @@
+'use client'
+
 import { useMemo } from 'react'
-import { useSetAtom } from '../../react.ts'
-import { atom } from '../../vanilla.ts'
-import type { Getter, Setter } from '../../vanilla.ts'
+import { useSetAtom } from '../../react.js'
+import { atom } from '../../vanilla.js'
+import type { Getter, Setter } from '../../vanilla.js'
 
 type Options = Parameters<typeof useSetAtom>[1]
 

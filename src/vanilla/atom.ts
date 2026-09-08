@@ -1,4 +1,4 @@
-import type { Store } from './store'
+import type { Store } from './store.js'
 
 type Getter = <Value>(atom: Atom<Value>) => Value
 
@@ -11,12 +11,9 @@ type SetAtom<Args extends unknown[], Result> = <A extends Args>(
   ...args: A
 ) => Result
 
-/**
- * setSelf is for internal use only and subject to change without notice.
- */
-type Read<Value, SetSelf = never> = (
+type Read<Value> = (
   get: Getter,
-  options: { readonly signal: AbortSignal; readonly setSelf: SetSelf },
+  options: { readonly signal: AbortSignal },
 ) => Value
 
 type Write<Args extends unknown[], Result> = (
@@ -60,7 +57,6 @@ export interface WritableAtom<
   Args extends unknown[],
   Result,
 > extends Atom<Value> {
-  read: Read<Value, SetAtom<Args, unknown>>
   write: Write<Args, Result>
   onMount?: OnMount<Args, Result>
 }
@@ -77,7 +73,7 @@ let keyCount = 0 // global key count for all atoms
 
 // writable derived atom
 export function atom<Value, Args extends unknown[], Result>(
-  read: Read<Value, SetAtom<Args, unknown>>,
+  read: Read<Value>,
   write: Write<Args, Result>,
 ): WritableAtom<Value, Args, Result>
 
@@ -100,19 +96,19 @@ export function atom<Value>(
 ): PrimitiveAtom<Value> & WithInitialValue<Value>
 
 export function atom<Value, Args extends unknown[], Result>(
-  read?: Value | Read<Value, SetAtom<Args, unknown>>,
+  read?: Value | Read<Value>,
   write?: Write<Args, Result>,
 ) {
   const key = `atom${++keyCount}`
   const config = {
     toString() {
-      return import.meta.env?.MODE !== 'production' && this.debugLabel
+      return process.env.NODE_ENV !== 'production' && this.debugLabel
         ? key + ':' + this.debugLabel
         : key
     },
   } as WritableAtom<Value, Args, Result> & { init?: Value | undefined }
   if (typeof read === 'function') {
-    config.read = read as Read<Value, SetAtom<Args, unknown>>
+    config.read = read as Read<Value>
   } else {
     config.init = read
     config.read = defaultRead

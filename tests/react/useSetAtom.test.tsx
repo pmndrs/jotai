@@ -5,7 +5,7 @@ import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { WritableAtom } from 'jotai/vanilla'
-import { useCommitCount } from '../test-utils'
+import { useCommitCount } from '../test-utils.js'
 
 it('useSetAtom does not trigger rerender in component', async () => {
   const countAtom = atom(0)
