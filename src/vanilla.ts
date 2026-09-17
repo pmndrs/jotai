@@ -7,6 +7,8 @@ export {
   INTERNAL_overrideCreateStore,
 } from './vanilla/store.js'
 
+export type { Store } from './vanilla/store.js'
+
 export type {
   Getter,
   Setter,

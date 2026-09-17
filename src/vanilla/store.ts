@@ -1,7 +1,7 @@
 import { INTERNAL_buildStoreRev4 as INTERNAL_buildStore } from './internals.js'
 import type { INTERNAL_Store } from './internals.js'
 
-export type Store = INTERNAL_Store
+export type Store = Pick<INTERNAL_Store, 'get' | 'set' | 'sub'>
 
 let overriddenCreateStore: typeof createStore | undefined
 
