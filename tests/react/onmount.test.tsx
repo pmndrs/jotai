@@ -1,8 +1,13 @@
 import { StrictMode, Suspense, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { useAtom } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
+import {
+  Provider,
+  useAtom,
+  useAtomValue,
+  useAtomValueRawSync,
+} from 'jotai/react'
+import { atom, createStore } from 'jotai/vanilla'
 import { sleep } from '../test-utils.js'
 
 beforeEach(() => {
@@ -114,6 +119,41 @@ it('one derived atom, one onMount', () => {
 
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
+
+it.each([
+  { name: 'useAtomValue', useValue: useAtomValue },
+  { name: 'useAtomValueRawSync', useValue: useAtomValueRawSync },
+])(
+  '$name observes synchronous onMount updates in both subscribers (#3371)',
+  async ({ useValue }) => {
+    const baseAtom = atom('unmounted-default')
+    baseAtom.onMount = (set) => set('mounted')
+    const otherAtom = atom('other-value')
+    const derivedAtom = atom((get) => `${get(baseAtom)}:${get(otherAtom)}`)
+    const store = createStore()
+
+    const Subscriber = ({ name }: { name: string }) => {
+      const value = useValue(derivedAtom)
+      return (
+        <div>
+          {name}: {value}
+        </div>
+      )
+    }
+
+    render(
+      <Provider store={store}>
+        <Subscriber name="A" />
+        <Subscriber name="B" />
+      </Provider>,
+    )
+    await act(() => Promise.resolve())
+
+    expect(store.get(derivedAtom)).toBe('mounted:other-value')
+    expect(screen.getByText('A: mounted:other-value')).toBeInTheDocument()
+    expect(screen.getByText('B: mounted:other-value')).toBeInTheDocument()
+  },
+)
 
 it('mount/unmount test', () => {
   const countAtom = atom(1)
