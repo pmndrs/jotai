@@ -135,6 +135,24 @@ it('useAtomValueRaw renders once on initial mount', () => {
   expect(screen.getByText('commits: 2, count: 1')).toBeInTheDocument()
 })
 
+it('useAtomValueRaw keeps its subscription on value changes', () => {
+  const store = createStore()
+  const countAtom = atom(0)
+  const subscribe = vi.spyOn(store, 'sub')
+
+  const Counter = () => {
+    const count = useAtomValueRaw(countAtom, { store })
+    return <div>count: {count}</div>
+  }
+
+  render(<Counter />)
+  expect(subscribe).toHaveBeenCalledTimes(1)
+
+  act(() => store.set(countAtom, 1))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(subscribe).toHaveBeenCalledTimes(1)
+})
+
 it('useAtomValueRaw with store option', () => {
   const store = createStore()
   const countAtom = atom(0)
@@ -153,4 +171,47 @@ it('useAtomValueRaw with store option', () => {
   expect(screen.getByText('count: 0')).toBeInTheDocument()
   act(() => store.set(countAtom, 1))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
+})
+
+it('useAtomValueRaw tracks committed values before switching atoms', () => {
+  const store = createStore()
+  const firstAtom = atom(0)
+  const baseAtom = atom(1)
+  baseAtom.onMount = (set) => set(0)
+  const secondAtom = atom((get) => get(baseAtom))
+
+  const Counter = ({
+    name,
+    activeAtom,
+  }: {
+    name: string
+    activeAtom: typeof secondAtom
+  }) => {
+    const count = useAtomValueRaw(activeAtom, { store })
+    return (
+      <div>
+        {name}: {count}
+      </div>
+    )
+  }
+
+  const Counters = ({ activeAtom }: { activeAtom: typeof secondAtom }) => (
+    <>
+      <Counter name="A" activeAtom={activeAtom} />
+      <Counter name="B" activeAtom={activeAtom} />
+    </>
+  )
+
+  const { rerender } = render(<Counters activeAtom={firstAtom} />)
+  expect(screen.getByText('A: 0')).toBeInTheDocument()
+  expect(screen.getByText('B: 0')).toBeInTheDocument()
+
+  act(() => store.set(firstAtom, 1))
+  expect(screen.getByText('A: 1')).toBeInTheDocument()
+  expect(screen.getByText('B: 1')).toBeInTheDocument()
+
+  rerender(<Counters activeAtom={secondAtom} />)
+  expect(store.get(secondAtom)).toBe(0)
+  expect(screen.getByText('A: 0')).toBeInTheDocument()
+  expect(screen.getByText('B: 0')).toBeInTheDocument()
 })
