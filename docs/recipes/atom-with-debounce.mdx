@@ -77,6 +77,12 @@ export default function atomWithDebounce<T>(
 }
 ```
 
+### Debouncing and async work
+
+Clearing the timeout in `clearTimeoutAtom` cancels a scheduled publication to `debouncedValueAtom`, but it does not cancel async work that has already started.
+
+For an async derived atom, pass its `options.signal` to `fetch` so the request can be aborted when that atom recalculates. If the atom reads only `debouncedValueAtom`, a new keystroke does not invalidate it immediately: the dependency changes when the debounced value is published (or a reset publishes it immediately). If a result should stop being eligible as soon as the text changes, track the current input separately from the debounced request value.
+
 ### Caveat
 
 Please note that this atom has different objectives from concurrent features in React 18 such as `useTransition` and `useDeferredValue` whose main aim is to prevent blocking of interaction with the page for expensive updates.
