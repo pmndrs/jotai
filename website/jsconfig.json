@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
     "checkJs": true,
+    "jsx": "preserve",
     "removeComments": true
   },
   "include": ["**/*.js", "**/*.jsx"],
