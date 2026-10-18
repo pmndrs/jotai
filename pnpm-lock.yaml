@@ -147,11 +147,11 @@ importers:
         specifier: ^4.23.0
         version: 4.25.0(gatsby@4.25.9(babel-eslint@10.1.0(eslint@7.32.0))(eslint-import-resolver-typescript@4.4.5(eslint-plugin-import@2.32.0)(eslint@9.39.4(jiti@1.21.7)))(eslint-plugin-testing-library@7.16.2(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(type-fest@0.21.3)(typescript@6.0.3))
       jotai:
-        specifier: ^2.4.1
-        version: 2.20.0(@babel/core@7.29.7)(@babel/template@7.29.7)(@types/react@19.3.0)(react@18.3.1)
+        specifier: ^3.0.1
+        version: 3.0.1(@types/react@19.3.0)(react@18.3.1)
       jotai-immer:
         specifier: ^0.2.0
-        version: 0.2.0(immer@9.0.21)(jotai@2.20.0(@babel/core@7.29.7)(@babel/template@7.29.7)(@types/react@19.3.0)(react@18.3.1))(react@18.3.1)
+        version: 0.2.0(immer@9.0.21)(jotai@3.0.1(@types/react@19.3.0)(react@18.3.1))(react@18.3.1)
       just-kebab-case:
         specifier: ^4.1.1
         version: 4.2.0
@@ -192,6 +192,9 @@ importers:
       babel-preset-gatsby:
         specifier: ^2.23.0
         version: 2.25.0(@babel/core@7.29.7)(core-js@3.49.0)
+      jotai-babel:
+        specifier: ^0.3.0
+        version: 0.3.0(@babel/core@7.29.7)(@babel/template@7.29.7)(jotai@3.0.1(@types/react@19.3.0)(react@18.3.1))
       postcss:
         specifier: ^8.4.29
         version: 8.5.14
@@ -5096,6 +5099,13 @@ packages:
   joi@17.13.3:
     resolution: {integrity: sha512-otDA4ldcIx+ZXsKHWmp0YizCweVRZG96J10b0FevjfuncLO1oX59THoAmHkNubYJ+9gWsYsp5k8v4ib6oDv1fA==}
 
+  jotai-babel@0.3.0:
+    resolution: {integrity: sha512-YL8MJ4ZKsKoXNCgrJvayVyBrwg0tJ56SVJg7i2s9SpTCa/SJ/KNc0gJBEWZDJuXC7xEcAKFbFNOc2cKQM9Ak5w==}
+    peerDependencies:
+      '@babel/core': '>=7.0.0'
+      '@babel/template': '>=7.0.0'
+      jotai: '>=2.0.0'
+
   jotai-immer@0.2.0:
     resolution: {integrity: sha512-hahK8EPiROS9RoNWmX/Z8rY9WkAijspX4BZ1O7umpcwI4kPNkbcCpu/PhiQ8FMcpEcF6KmbpbMpSSj/GFmo8NA==}
     peerDependencies:
@@ -5103,19 +5113,13 @@ packages:
       jotai: '>=1.11.0'
       react: '>=17.0.0'
 
-  jotai@2.20.0:
-    resolution: {integrity: sha512-b5GAqgmXmXzB4WPaTH26ppk9Sl7AA9WSQX7yfdM+gJ1rFROiWcVbi97gFuN/yVCojOcbcvop2sfLL+fjxW0JVg==}
-    engines: {node: '>=12.20.0'}
+  jotai@3.0.1:
+    resolution: {integrity: sha512-6tS7wY9otdiNp26Wqb/1ds3OuVJVoV+tJlN4hpLrYmfFf/t9bauVt+zKBNSpS5qSl5h6GieVQ+OknVraZX+udQ==}
+    engines: {node: '>=22.12.0'}
     peerDependencies:
-      '@babel/core': '>=7.0.0'
-      '@babel/template': '>=7.0.0'
-      '@types/react': '>=17.0.0'
-      react: '>=17.0.0'
+      '@types/react': '>=18.0.0'
+      react: '>=18.0.0'
     peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@babel/template':
-        optional: true
       '@types/react':
         optional: true
       react:
@@ -14636,16 +14640,20 @@ snapshots:
       '@sideway/formula': 3.0.1
       '@sideway/pinpoint': 2.0.0
 
-  jotai-immer@0.2.0(immer@9.0.21)(jotai@2.20.0(@babel/core@7.29.7)(@babel/template@7.29.7)(@types/react@19.3.0)(react@18.3.1))(react@18.3.1):
+  jotai-babel@0.3.0(@babel/core@7.29.7)(@babel/template@7.29.7)(jotai@3.0.1(@types/react@19.3.0)(react@18.3.1)):
     dependencies:
-      immer: 9.0.21
-      jotai: 2.20.0(@babel/core@7.29.7)(@babel/template@7.29.7)(@types/react@19.3.0)(react@18.3.1)
-      react: 18.3.1
-
-  jotai@2.20.0(@babel/core@7.29.7)(@babel/template@7.29.7)(@types/react@19.3.0)(react@18.3.1):
-    optionalDependencies:
       '@babel/core': 7.29.7
       '@babel/template': 7.29.7
+      jotai: 3.0.1(@types/react@19.3.0)(react@18.3.1)
+
+  jotai-immer@0.2.0(immer@9.0.21)(jotai@3.0.1(@types/react@19.3.0)(react@18.3.1))(react@18.3.1):
+    dependencies:
+      immer: 9.0.21
+      jotai: 3.0.1(@types/react@19.3.0)(react@18.3.1)
+      react: 18.3.1
+
+  jotai@3.0.1(@types/react@19.3.0)(react@18.3.1):
+    optionalDependencies:
       '@types/react': 19.3.0
       react: 18.3.1
 
