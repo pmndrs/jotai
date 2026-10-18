@@ -27,14 +27,12 @@ export function useAtomEffect(effectFn: EffectFn) {
 ```tsx
 import { useCallbackOne as useStableCallback } from 'use-memo-one'
 import { atom, useAtom } from 'jotai'
-import { atomFamily } from 'jotai/utils'
+import { atomFamily } from 'jotai-family'
 import { useAtomEffect } from './useAtomEffect'
 
-const channelSubscriptionAtomFamily = atomFamily<Channel>(
-  (channelId: string) => {
-    return atom(new Channel(channelId))
-  },
-)
+const channelSubscriptionAtomFamily = atomFamily((channelId: string) => {
+  return atom(new Channel(channelId))
+})
 const messagesAtom = atom<Message[]>([])
 
 function Messages({ channelId }: { channelId: string }) {

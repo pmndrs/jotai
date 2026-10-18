@@ -6,27 +6,17 @@ keywords: family
 
 ## atomFamily
 
-:::caution Deprecated
-`atomFamily` is deprecated and will be removed in Jotai v3.
+The `atomFamily` function is provided by the [`jotai-family`](https://github.com/jotaijs/jotai-family) package.
 
-Please migrate to the [`jotai-family`](https://github.com/jotaijs/jotai-family) package, which provides the same API with additional features like `atomTree`.
+Install the package:
 
-**Migration:**
-
-```bash
+```sh
 npm install jotai-family
 ```
 
-```ts
-// Before
-import { atomFamily } from 'jotai/utils'
-
-// After
+```js
 import { atomFamily } from 'jotai-family'
 ```
-
-The API is identical, so no code changes are needed beyond the import statement.
-:::
 
 Ref: https://github.com/pmndrs/jotai/issues/23
 
@@ -47,7 +37,7 @@ specify a deepEqual function to `areEqual`. For example:
 
 ```js
 import { atom } from 'jotai'
-import { atomFamily } from 'jotai/utils'
+import { atomFamily } from 'jotai-family'
 import deepEqual from 'fast-deep-equal'
 
 const fooFamily = atomFamily((param) => atom(param), deepEqual)
@@ -81,7 +71,7 @@ Example with explicit types:
 ```ts
 import { atom } from 'jotai'
 import type { PrimitiveAtom } from 'jotai'
-import { atomFamily } from 'jotai/utils'
+import { atomFamily } from 'jotai-family'
 
 const myFamily = atomFamily<number, PrimitiveAtom<number>>((id: number) =>
   atom(id),
@@ -162,7 +152,7 @@ Use `myFamily.remove(param)` or `myFamily.setShouldRemove(shouldRemove)` to mana
 
 ```js
 import { atom } from 'jotai'
-import { atomFamily } from 'jotai/utils'
+import { atomFamily } from 'jotai-family'
 
 const todoFamily = atomFamily((name) => atom(name))
 
@@ -172,7 +162,7 @@ todoFamily('foo')
 
 ```js
 import { atom } from 'jotai'
-import { atomFamily } from 'jotai/utils'
+import { atomFamily } from 'jotai-family'
 
 const todoFamily = atomFamily((name) =>
   atom(
@@ -187,7 +177,7 @@ const todoFamily = atomFamily((name) =>
 
 ```js
 import { atom } from 'jotai'
-import { atomFamily } from 'jotai/utils'
+import { atomFamily } from 'jotai-family'
 
 const todoFamily = atomFamily(
   ({ id, name }) => atom({ name }),
@@ -203,11 +193,9 @@ const todoFamily = atomFamily(
 
 ## Migration to jotai-family
 
-For new projects or when updating existing code, we recommend using the [`jotai-family`](https://github.com/jotaijs/jotai-family) package instead. It provides:
+`atomFamily` has been removed from `jotai/utils` in Jotai v3.
+Update the import to `jotai-family`; the API is the same.
+See the [v3 migration guide](../guides/migrating-to-v3.mdx#atomfamily).
 
-- **Same API**: Drop-in replacement for `atomFamily`
-- **Additional features**: Includes `atomTree` for hierarchical atom management
-- **Better maintenance**: Dedicated package with focused development
-- **Future-proof**: Will continue to be supported in Jotai v3 and beyond
-
-See the [jotai-family documentation](https://github.com/jotaijs/jotai-family#readme) for more details.
+The package also provides `atomTree` for hierarchical atom collections.
+See the [jotai-family documentation](https://github.com/jotaijs/jotai-family#readme) for details.

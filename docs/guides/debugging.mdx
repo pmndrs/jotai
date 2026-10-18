@@ -127,9 +127,8 @@ Every feature of `useAtomDevtools` is supported in this hook, but there's an ext
 
 ## Frozen Atoms
 
-To find bugs where you accidentally tried to mutate objects stored in atoms you
-could use `freezeAtom` or `freezeAtomCreator`from `jotai/utils` bundle.
-Which returns atoms value that is deeply freezed with `Object.freeze`.
+Use `freezeAtom` from `jotai/utils` to find accidental mutations of objects
+stored in atoms. It deeply freezes atom values with `Object.freeze`.
 
 ### freezeAtom
 
@@ -159,14 +158,17 @@ const objAtom = freezeAtom(atom({ count: 0 }))
 
 ### freezeAtomCreator
 
-If you need, you can define a factory for `freezeAtom`.
+The `freezeAtomCreator` export from `jotai/utils` is deprecated.
+If you need a factory for `freezeAtom`, define it in your project:
 
 ```ts
+import type { Atom } from 'jotai'
 import { freezeAtom } from 'jotai/utils'
 
 export function freezeAtomCreator<
-  CreateAtom extends (...args: unknown[]) => Atom<unknown>,
->(createAtom: CreateAtom): CreateAtom {
-  return ((...args: unknown[]) => freezeAtom(createAtom(...args))) as never
+  Args extends unknown[],
+  AtomType extends Atom<unknown>,
+>(createAtom: (...args: Args) => AtomType): (...args: Args) => AtomType {
+  return (...args) => freezeAtom(createAtom(...args))
 }
 ```
