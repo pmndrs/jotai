@@ -138,6 +138,15 @@ yarn add jotai
 # pnpm
 pnpm add jotai
 `}</Code>
+      <blockquote>
+        <p>
+          <strong>Requirements</strong>
+        </p>
+        <p>
+          Jotai requires React 18 or later and Node.js 22.12.0 or later. If you
+          use TypeScript, version 5.5 or later is required.
+        </p>
+      </blockquote>
     </section>
   ),
   'Create atoms': (
