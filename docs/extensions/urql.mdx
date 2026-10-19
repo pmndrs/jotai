@@ -108,14 +108,16 @@ type AtomWithMutationOptions<
 
 ### Disable suspense
 
-Usage of `import { loadable } from "jotai/utils"` is preferred instead as proven more stable. However is you still want that
-here is how you do it:
+Set `suspenseAtom` to `false` to disable Suspense for `jotai-urql` atoms
+in the same store. Handle the initial result, where `data` is `undefined`,
+in your component.
 
 ```tsx
+import { useHydrateAtoms } from 'jotai/utils'
 import { suspenseAtom } from 'jotai-urql'
 
 export const App = () => {
-  // We disable suspense for the entire app
+  // Disable suspense for jotai-urql atoms in this store
   useHydrateAtoms([[suspenseAtom, false]])
   return <Counter />
 }

@@ -38,7 +38,7 @@ const App = () => {
 }
 ```
 
-Alternatively, you could avoid the inherent suspending that Jotai does for you, by wrapping your atoms with the [`loadable` API](../utilities/async.mdx#loadable), or by reading the atom with [`useAtomValueRaw`](../core/use-atom.mdx#useatomvalueraw) instead of `useAtomValue`.
+To avoid suspending while a promise is pending, use [`unwrap`](../utilities/async.mdx#unwrap) to provide a synchronous fallback. Errors are still thrown. Alternatively, read the promise directly with [`useAtomValueRaw`](../core/use-atom.mdx#useatomvalueraw) or [`useAtomValueRawSync`](../core/use-atom.mdx#useatomvaluerawsync) and manage its loading and error states in your component.
 
 If another atom uses an async atom, it will return a promise. So, we need to make the atom also async.
 
@@ -115,9 +115,7 @@ const baseAtom = atom(new Promise(() => {})) // Will be suspend until set otherw
 
 Async support is first class in Jotai. It fully leverages React Suspense at its core.
 
-> Technically, Suspense usage other than React.lazy is still unsupported / undocumented in React 17. If this is blocking, so you can still use the [`loadable` API](../utilities/async.mdx) to avoid suspending
-
-To use async atoms, you need to wrap your component tree with `<Suspense>`.
+When reading async atoms with `useAtom` or `useAtomValue`, wrap your component tree with `<Suspense>` to handle pending promises.
 
 > If you have a `<Provider>`, place **at least one** `<Suspense>` inside said `<Provider>`; otherwise, it may cause an endless loop while rendering the components.
 
