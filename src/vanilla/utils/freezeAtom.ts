@@ -49,17 +49,3 @@ export function freezeAtom(
   }
   return anAtom
 }
-
-/**
- * @deprecated Define it on users end
- */
-export function freezeAtomCreator<
-  CreateAtom extends (...args: unknown[]) => Atom<unknown>,
->(createAtom: CreateAtom): CreateAtom {
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(
-      '[DEPRECATED] freezeAtomCreator is deprecated, define it on users end',
-    )
-  }
-  return ((...args: unknown[]) => freezeAtom(createAtom(...args))) as never
-}
