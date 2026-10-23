@@ -1,9 +1,9 @@
 import { StrictMode } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
-import { freezeAtom, freezeAtomCreator } from 'jotai/vanilla/utils'
+import { freezeAtom } from 'jotai/vanilla/utils'
 
 it('freezeAtom basic test', () => {
   const objAtom = atom({ deep: { count: 0 } })
@@ -78,45 +78,4 @@ it('freezeAtom handles primitive correctly', () => {
 
   fireEvent.click(screen.getByText('set number'))
   expect(screen.getByText('value: 456')).toBeInTheDocument()
-})
-
-describe('freezeAtomCreator', () => {
-  let savedConsoleWarn: typeof console.warn
-  beforeEach(() => {
-    savedConsoleWarn = console.warn
-    console.warn = vi.fn()
-  })
-  afterEach(() => {
-    console.warn = savedConsoleWarn
-  })
-
-  it('freezeAtomCreator basic test', () => {
-    const createFrozenAtom = freezeAtomCreator(atom)
-    const objAtom = createFrozenAtom({ deep: {} }, (_get, set, _ignored?) => {
-      set(objAtom, { deep: {} })
-    })
-
-    const Component = () => {
-      const [obj, setObj] = useAtom(objAtom)
-      return (
-        <>
-          <button onClick={setObj}>change</button>
-          <div>
-            isFrozen: {`${Object.isFrozen(obj) && Object.isFrozen(obj.deep)}`}
-          </div>
-        </>
-      )
-    }
-
-    render(
-      <StrictMode>
-        <Component />
-      </StrictMode>,
-    )
-
-    expect(screen.getByText('isFrozen: true')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByText('change'))
-    expect(screen.getByText('isFrozen: true')).toBeInTheDocument()
-  })
 })
