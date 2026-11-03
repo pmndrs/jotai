@@ -41,6 +41,8 @@ type AtomState<Value = AnyValue> = {
   readonly p: Set<AnyAtom>
   /** The epoch number of the atom. */
   n: EpochNumber
+  /** The revision of dependency keys, incremented when a dependency is added or removed. */
+  k: EpochNumber
   /** The store epoch number that last validated the atom. */
   m?: EpochNumber
   /** Atom value */
@@ -62,6 +64,8 @@ type Mounted = {
   readonly d: Set<AnyAtom>
   /** Set of mounted atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
+  /** The dependency revision of the atom state last reconciled with `d`. */
+  k: EpochNumber
   /** Function to run when the atom is unmounted. */
   u?: () => void
 }
@@ -524,7 +528,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
     // Ref: https://github.com/pmndrs/jotai/pull/3313
     const storeHooks = buildingBlocks[KEY_storeHooks]
     const atomOnInit = buildingBlocks[KEY_atomOnInit]
-    atomState = { d: new Map(), p: new Set(), n: 0 }
+    atomState = { d: new Map(), p: new Set(), n: 0, k: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
     if (hasOnInit(atom)) {
@@ -678,6 +682,12 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
         break
       }
     }
+    if (!hasChangedDeps) {
+      // The invalidation may have arrived through mounted dependencies
+      // that are no longer in aState.d, e.g. after an eager read in write.
+      const mounted = mountedMap.get(a)
+      hasChangedDeps = !!mounted && mounted.k !== aState.k
+    }
     if (hasChangedDeps) {
       invalidatedAtoms.set(a, aState.n)
       readAtomState(buildingBlocks, store, a)
@@ -746,6 +756,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
   const pruneDependencies = () => {
     for (const a of prevDeps) {
       atomState.d.delete(a)
+      ++atomState.k
     }
   }
   const mountDependenciesIfAsync = () => {
@@ -778,6 +789,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
       return returnAtomValue(aState)
     } finally {
       prevDeps.delete(a)
+      if (!atomState.d.has(a)) {
+        ++atomState.k
+      }
       atomState.d.set(a, aState.n)
       if (isPromiseLike(atomState.v)) {
         addPendingPromiseToDependency(atom, atomState.v, aState)
@@ -954,6 +968,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (
   const atomState = ensureAtomState(buildingBlocks, store, atom)
   const mounted = mountedMap.get(atom)
   if (mounted && atomState.d.size > 0) {
+    mounted.k = atomState.k
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(buildingBlocks, store, a)
@@ -1004,6 +1019,7 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (buildingBlocks, store, atom) => {
       l: new Set(),
       d: new Set(atomState.d.keys()),
       t: new Set(),
+      k: atomState.k,
     }
     mountedMap.set(atom, mounted)
     if (isActuallyWritableAtom(atom) && hasOnMount(atom)) {
