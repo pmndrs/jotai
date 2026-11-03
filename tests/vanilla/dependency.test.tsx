@@ -426,6 +426,72 @@ it('batches sync writes', () => {
   expect(store.get(a)).toBe(1)
 })
 
+it('reconciles dynamic dependencies changed by an eager read in write', () => {
+  const base = atom(1)
+  const derived = atom((get) => get(atom((get) => get(base))))
+  const w = atom(null, (get, set) => {
+    set(base, 2)
+    expect(get(derived)).toBe(2)
+  })
+  const store = createStore()
+  const listener = vi.fn()
+  store.sub(derived, listener)
+  store.set(w)
+  expect(store.get(derived)).toBe(2)
+  expect(listener).toHaveBeenCalledTimes(1)
+  store.set(base, 3)
+  expect(store.get(derived)).toBe(3)
+  expect(listener).toHaveBeenCalledTimes(2)
+  store.set(base, 4)
+  expect(store.get(derived)).toBe(4)
+  expect(listener).toHaveBeenCalledTimes(3)
+})
+
+it('reconciles dynamic dependencies even if the derived value is unchanged', () => {
+  const base = atom(1)
+  const derived = atom((get) =>
+    get(atom((get) => get(base))) > 10 ? 'big' : 'small',
+  )
+  const w = atom(null, (get, set) => {
+    set(base, 2)
+    expect(get(derived)).toBe('small')
+  })
+  const store = createStore()
+  const listener = vi.fn()
+  store.sub(derived, listener)
+  store.set(w)
+  expect(listener).not.toHaveBeenCalled()
+  store.set(base, 20)
+  expect(store.get(derived)).toBe('big')
+  expect(listener).toHaveBeenCalledOnce()
+})
+
+it('mounts and unmounts dependencies added and removed asynchronously', async () => {
+  const cond = atom(true)
+  const a = atom(0)
+  const b = atom(0)
+  const onUnmountA = vi.fn()
+  const onMountB = vi.fn()
+  a.onMount = () => onUnmountA
+  b.onMount = onMountB
+  const derived = atom(async (get) => {
+    const c = get(cond)
+    await sleep(100)
+    return c ? get(a) : get(b)
+  })
+  const store = createStore()
+  store.sub(derived, () => {})
+  await vi.advanceTimersByTimeAsync(100)
+  expect(onMountB).not.toHaveBeenCalled()
+  store.set(cond, false)
+  await vi.advanceTimersByTimeAsync(100)
+  expect(onUnmountA).toHaveBeenCalledOnce()
+  expect(onMountB).toHaveBeenCalledOnce()
+  store.set(b, 1)
+  await vi.advanceTimersByTimeAsync(100)
+  await expect(store.get(derived)).resolves.toBe(1)
+})
+
 it('unmounts the last dependency when it is removed', () => {
   const base = atom(1)
   const onUnmount = vi.fn()
