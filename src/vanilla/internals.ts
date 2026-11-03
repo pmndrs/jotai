@@ -39,10 +39,10 @@ type AtomState<Value = AnyValue> = {
    * TODO(daishi): revisit how to handle this
    */
   readonly p: Set<AnyAtom>
-  /** The epoch number of the atom. */
-  n: EpochNumber
   /** The revision of dependency keys, incremented when a dependency is added or removed. */
   k: EpochNumber
+  /** The epoch number of the atom. */
+  n: EpochNumber
   /** The store epoch number that last validated the atom. */
   m?: EpochNumber
   /** Atom value */
@@ -755,8 +755,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
   const prevDeps = new Set<AnyAtom>(atomState.d.keys())
   const pruneDependencies = () => {
     for (const a of prevDeps) {
-      atomState.d.delete(a)
-      ++atomState.k
+      if (atomState.d.delete(a)) {
+        ++atomState.k
+      }
     }
   }
   const mountDependenciesIfAsync = () => {
