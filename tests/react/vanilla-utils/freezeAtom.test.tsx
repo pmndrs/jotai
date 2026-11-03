@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
+import { atom, createStore } from 'jotai/vanilla'
 import { freezeAtom, freezeAtomCreator } from 'jotai/vanilla/utils'
 
 it('freezeAtom basic test', () => {
@@ -119,4 +119,31 @@ describe('freezeAtomCreator', () => {
     fireEvent.click(screen.getByText('change'))
     expect(screen.getByText('isFrozen: true')).toBeInTheDocument()
   })
+})
+
+it('freezeAtom handles circular references', () => {
+  type Node = { name: string; parent?: Node; children: Node[] }
+  const root: Node = { name: 'root', children: [] }
+  root.children.push({ name: 'child', parent: root, children: [] })
+  const store = createStore()
+  const value = store.get(freezeAtom(atom(root)))
+  expect(Object.isFrozen(value)).toBe(true)
+  expect(Object.isFrozen(value.children[0])).toBe(true)
+})
+
+it('freezeAtom handles typed arrays', () => {
+  const store = createStore()
+  const value = store.get(freezeAtom(atom({ bytes: new Uint8Array([1, 2]) })))
+  expect(Object.isFrozen(value)).toBe(true)
+  expect(value.bytes[0]).toBe(1)
+})
+
+it('freezeAtom handles typed arrays on the write path', () => {
+  const store = createStore()
+  const objAtom = freezeAtom(atom({ bytes: new Uint8Array([1]) }))
+  const next = { bytes: new Uint8Array([1, 2]) }
+  expect(() => store.set(objAtom, next)).not.toThrow()
+  const value = store.get(objAtom)
+  expect(value.bytes).toBe(next.bytes)
+  expect(Object.isFrozen(value)).toBe(true)
 })
