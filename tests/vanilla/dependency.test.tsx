@@ -446,3 +446,17 @@ it('reconciles dynamic dependencies changed by an eager read in write', () => {
   expect(store.get(derived)).toBe(4)
   expect(listener).toHaveBeenCalledTimes(3)
 })
+
+it('unmounts the last dependency when it is removed', () => {
+  const base = atom(1)
+  const onUnmount = vi.fn()
+  base.onMount = () => onUnmount
+  let useBase = true
+  const derived = atom((get) => (useBase ? get(base) : 0))
+  const store = createStore()
+  store.sub(derived, () => {})
+  useBase = false
+  store.set(base, 2)
+  expect(store.get(derived)).toBe(0)
+  expect(onUnmount).toHaveBeenCalledOnce()
+})
