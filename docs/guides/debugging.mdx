@@ -139,6 +139,9 @@ freezeAtom(anAtom): AtomType
 `freezeAtom` takes an existing atom and make it "frozen".
 It returns the same atom.
 The atom value will be deeply frozen by `Object.freeze`.
+Typed arrays, `DataView`s and `Buffer`s are left as they are:
+non-empty ones can't be frozen, and freezing never stopped writes
+to their bytes anyway.
 It is useful to find bugs where you unintentionally tried
 to change objects (states) which can lead to unexpected behavior.
 You may use `freezeAtom` with all atoms to prevent this situation.
