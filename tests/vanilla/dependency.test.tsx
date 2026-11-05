@@ -505,3 +505,73 @@ it('unmounts the last dependency when it is removed', () => {
   expect(store.get(derived)).toBe(0)
   expect(onUnmount).toHaveBeenCalledOnce()
 })
+
+it('does not call onMount for a dependency mounted and unmounted within one write', () => {
+  const sel = atom(true)
+  const a = atom(0)
+  const b = atom(1)
+  const onMount = vi.fn()
+  const onUnmount = vi.fn()
+  b.onMount = () => {
+    onMount()
+    return onUnmount
+  }
+  const derived = atom((get) => (get(sel) ? get(a) : get(b)))
+  const w = atom(null, (get, set) => {
+    set(sel, false)
+    expect(get(derived)).toBe(1)
+    set(sel, true)
+    expect(get(derived)).toBe(0)
+  })
+  const store = createStore()
+  store.sub(derived, () => {})
+  store.set(w)
+  expect(onMount).not.toHaveBeenCalled()
+  expect(onUnmount).not.toHaveBeenCalled()
+})
+
+it('calls onMount once for a dependency removed and re-added within one write', () => {
+  const sel = atom(true)
+  const a = atom(0)
+  const b = atom(1)
+  const onMount = vi.fn()
+  const onUnmount = vi.fn()
+  b.onMount = () => {
+    onMount()
+    return onUnmount
+  }
+  const derived = atom((get) => (get(sel) ? get(a) : get(b)))
+  const w = atom(null, (get, set) => {
+    set(sel, false)
+    expect(get(derived)).toBe(1)
+    set(sel, true)
+    expect(get(derived)).toBe(0)
+    set(sel, false)
+    expect(get(derived)).toBe(1)
+  })
+  const store = createStore()
+  const unsub = store.sub(derived, () => {})
+  store.set(w)
+  expect(onMount).toHaveBeenCalledOnce()
+  expect(onUnmount).not.toHaveBeenCalled()
+  unsub()
+  expect(onUnmount).toHaveBeenCalledOnce()
+})
+
+it('does not call onMount for a dependency unmounted by a listener before callbacks flush', () => {
+  const sel = atom(true)
+  const a = atom(0)
+  const b = atom(1)
+  const onMount = vi.fn()
+  const onUnmount = vi.fn()
+  b.onMount = () => {
+    onMount()
+    return onUnmount
+  }
+  const derived = atom((get) => (get(sel) ? get(a) : get(b)))
+  const store = createStore()
+  const unsub = store.sub(derived, () => unsub())
+  store.set(sel, false)
+  expect(onMount).not.toHaveBeenCalled()
+  expect(onUnmount).not.toHaveBeenCalled()
+})
