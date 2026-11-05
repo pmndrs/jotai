@@ -39,6 +39,7 @@ import {
   INTERNAL_KEY_storeSub as KEY_storeSub,
   INTERNAL_KEY_unmountAtom as KEY_unmountAtom,
   INTERNAL_KEY_unmountCallbacks as KEY_unmountCallbacks,
+  INTERNAL_KEY_unreconciledAtoms as KEY_unreconciledAtoms,
   INTERNAL_KEY_writeAtomState as KEY_writeAtomState,
 } from 'jotai/vanilla/internals'
 
@@ -49,6 +50,7 @@ const buildingBlockKeys: (keyof INTERNAL_BuildingBlocks)[] = [
   KEY_changedAtoms,
   KEY_mountCallbacks,
   KEY_unmountCallbacks,
+  KEY_unreconciledAtoms,
   KEY_storeHooks,
   KEY_atomRead,
   KEY_atomWrite,
@@ -101,7 +103,6 @@ describe('internals', () => {
             d: new Map(),
             p: new Set(),
             n: 0,
-            k: 0,
             v: 0,
           } as INTERNAL_AtomState
         }),
@@ -468,94 +469,8 @@ describe('dependency revision', () => {
     return { store, storeHooks, buildingBlocks, getAtomState, getMounted }
   }
 
-  const createDeferred = () => {
-    const resolvers: (() => void)[] = []
-    const wait = () => new Promise<void>((r) => resolvers.push(r))
-    const resolveNext = async () => {
-      resolvers.shift()!()
-      await Promise.resolve()
-      await Promise.resolve()
-    }
-    return { wait, resolveNext }
-  }
-
-  it('does not increment k for stable dependency keys or epoch changes', () => {
-    const { store, getAtomState, getMounted } = createStoreWithHooks()
-    const a = atom(0)
-    const b = atom(0)
-    const derived = atom((get) => get(a) + get(b))
-    store.sub(derived, () => {})
-    const k = getAtomState(derived).k
-    store.set(a, 1)
-    store.set(b, 1)
-    store.set(a, 2)
-    expect(store.get(derived)).toBe(3)
-    expect(getAtomState(derived).k).toBe(k)
-    expect(getMounted(derived)!.k).toBe(k)
-  })
-
-  it('increments k once per dependency key added or removed', () => {
-    const { store, getAtomState, getMounted } = createStoreWithHooks()
-    const useB = atom(false)
-    const a = atom(0)
-    const b = atom(0)
-    const derived = atom((get) => (get(useB) ? get(b) : get(a)))
-    store.sub(derived, () => {})
-    const k = getAtomState(derived).k
-    store.set(useB, true)
-    expect(getAtomState(derived).k).toBe(k + 2)
-    expect(getMounted(derived)!.k).toBe(k + 2)
-    expect([...getMounted(derived)!.d]).toEqual([useB, b])
-    expect(getMounted(a)).toBeUndefined()
-  })
-
-  it('does not increment k for failed dependency deletions from overlapping async reads', async () => {
-    const { store, getAtomState } = createStoreWithHooks()
-    const { wait, resolveNext } = createDeferred()
-    const cond = atom(true)
-    const y = atom(0)
-    const x = atom(0)
-    const derived = atom(async (get) => {
-      const c = get(cond)
-      get(y)
-      await wait()
-      return c ? get(x) : 0
-    })
-    store.get(derived)
-    await resolveNext()
-    expect([...getAtomState(derived).d.keys()]).toEqual([cond, y, x])
-    const k = getAtomState(derived).k
-    store.set(cond, false)
-    store.get(derived)
-    store.set(y, 1)
-    store.get(derived)
-    await resolveNext()
-    await resolveNext()
-    expect([...getAtomState(derived).d.keys()]).toEqual([cond, y])
-    expect(getAtomState(derived).k).toBe(k + 1)
-  })
-
-  it('skips mounting reconciliation when k is unchanged', () => {
-    const { store, buildingBlocks, getAtomState, getMounted } =
-      createStoreWithHooks()
-    const mountDependencies = buildingBlocks[KEY_mountDependencies]
-    const a = atom(0)
-    const extra = atom(0)
-    const derived = atom((get) => get(a))
-    store.sub(derived, () => {})
-    const atomState = getAtomState(derived)
-    atomState.d.set(extra, 0)
-    mountDependencies(buildingBlocks, store, derived)
-    expect(getMounted(extra)).toBeUndefined()
-    ++atomState.k
-    mountDependencies(buildingBlocks, store, derived)
-    expect(getMounted(extra)).toBeDefined()
-    expect(getMounted(derived)!.k).toBe(atomState.k)
-  })
-
   it('reconciles when dependencies change during reentrant mounting', () => {
-    const { store, storeHooks, getAtomState, getMounted } =
-      createStoreWithHooks()
+    const { store, storeHooks, getMounted } = createStoreWithHooks()
     const useB = atom(false)
     const useC = atom(false)
     const a = atom('a')
@@ -573,7 +488,45 @@ describe('dependency revision', () => {
     expect(store.get(derived)).toBe('c2')
     expect(new Set(getMounted(derived)!.d)).toEqual(new Set([useB, useC, c]))
     expect(getMounted(a)).toBeUndefined()
-    expect(getMounted(derived)!.k).toBe(getAtomState(derived).k)
+  })
+
+  it('avoids transient mounting during eager reads in a write', () => {
+    const storeHooks = INTERNAL_initializeStoreHooks({})
+    const store = INTERNAL_buildStore({ [KEY_storeHooks]: storeHooks })
+
+    const sel = atom(false)
+    const a = atom(0)
+    const b = atom(1)
+
+    const mount = vi.fn()
+    const unmount = vi.fn()
+    const onMount = vi.fn()
+
+    storeHooks.m.add(b, mount)
+    storeHooks.u.add(b, unmount)
+    b.onMount = () => {
+      onMount()
+    }
+
+    const derived = atom((get) => (get(sel) ? get(b) : get(a)))
+
+    const write = atom(null, (get, set) => {
+      set(sel, true)
+      expect(get(derived)).toBe(1)
+
+      set(sel, false)
+      expect(get(derived)).toBe(0)
+    })
+
+    const unsubscribe = store.sub(derived, () => {})
+    store.set(write)
+
+    // b is absent from the final dependency graph.
+    expect(mount).not.toHaveBeenCalled()
+    expect(unmount).not.toHaveBeenCalled()
+    expect(onMount).not.toHaveBeenCalled()
+
+    unsubscribe()
   })
 })
 
