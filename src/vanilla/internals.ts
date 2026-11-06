@@ -624,10 +624,8 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   const mountedMap = buildingBlocks[KEY_mountedMap]
   const invalidatedAtoms = buildingBlocks[KEY_invalidatedAtoms]
   const changedAtoms = buildingBlocks[KEY_changedAtoms]
-  const unreconciledAtoms = buildingBlocks[KEY_unreconciledAtoms]
   const ensureAtomState = buildingBlocks[KEY_ensureAtomState]
   const readAtomState = buildingBlocks[KEY_readAtomState]
-  const mountDependencies = buildingBlocks[KEY_mountDependencies]
   if (!changedAtoms.size) {
     return
   }
@@ -701,8 +699,6 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     if (hasChangedDeps) {
       invalidatedAtoms.set(a, aState.n)
       readAtomState(buildingBlocks, store, a)
-      mountDependencies(buildingBlocks, store, a)
-      unreconciledAtoms.delete(a)
     }
     invalidatedAtoms.delete(a)
   }
