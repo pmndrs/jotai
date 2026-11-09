@@ -99,7 +99,7 @@ importers:
         specifier: ^8.72.1
         version: 8.72.1(eslint@9.39.4(jiti@1.21.7))(typescript@6.0.3)
       vitest:
-        specifier: ^5.1.0
+        specifier: ^5.0.5
         version: 5.1.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(jsdom@31.0.0)(vite@8.0.10(@types/node@26.6.6)(jiti@1.21.7)(terser@5.48.0)(yaml@2.9.0))
       wonka:
         specifier: ^6.3.6
