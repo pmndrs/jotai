@@ -439,3 +439,27 @@ it('unmounts the last dependency when it is removed', () => {
   expect(store.get(derived)).toBe(0)
   expect(onUnmount).toHaveBeenCalledOnce()
 })
+
+it('keeps dependencies of a newer read when an older promise settles', async () => {
+  const store = createStore()
+  const countAtom = atom(0)
+  const useAsyncAtom = atom(false)
+  const asyncAtom = atom(async () => {
+    await sleep(100)
+    return 'async'
+  })
+  const derivedAtom = atom((get) =>
+    get(useAsyncAtom) ? get(asyncAtom) : get(countAtom),
+  )
+  store.sub(derivedAtom, () => {})
+  expect(store.get(derivedAtom)).toBe(0)
+
+  store.set(useAsyncAtom, true)
+  expect(store.get(derivedAtom)).toBeInstanceOf(Promise)
+  store.set(useAsyncAtom, false)
+  expect(store.get(derivedAtom)).toBe(0)
+
+  await vi.advanceTimersByTimeAsync(100)
+  store.set(countAtom, 1)
+  expect(store.get(derivedAtom)).toBe(1)
+})
