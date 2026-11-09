@@ -131,7 +131,7 @@
     "shx": "^0.4.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.1",
-    "vitest": "^5.0.5",
+    "vitest": "5.0.5",
     "wonka": "^6.3.6"
   },
   "peerDependencies": {
