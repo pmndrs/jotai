@@ -39,6 +39,7 @@ import {
   INTERNAL_KEY_storeSub as KEY_storeSub,
   INTERNAL_KEY_unmountAtom as KEY_unmountAtom,
   INTERNAL_KEY_unmountCallbacks as KEY_unmountCallbacks,
+  INTERNAL_KEY_unreconciledAtoms as KEY_unreconciledAtoms,
   INTERNAL_KEY_writeAtomState as KEY_writeAtomState,
 } from 'jotai/vanilla/internals'
 
@@ -49,6 +50,7 @@ const buildingBlockKeys: (keyof INTERNAL_BuildingBlocks)[] = [
   KEY_changedAtoms,
   KEY_mountCallbacks,
   KEY_unmountCallbacks,
+  KEY_unreconciledAtoms,
   KEY_storeHooks,
   KEY_atomRead,
   KEY_atomWrite,
@@ -452,6 +454,79 @@ describe('store hooks', () => {
       unsub()
       expect(flushCallback).toHaveBeenCalledTimes(1)
     })
+  })
+})
+
+describe('dependency revision', () => {
+  const createStoreWithHooks = () => {
+    const storeHooks = INTERNAL_initializeStoreHooks({})
+    const store = INTERNAL_buildStore({ [KEY_storeHooks]: storeHooks })
+    const buildingBlocks = INTERNAL_getBuildingBlocks(store)
+    const getAtomState = (a: Atom<unknown>) =>
+      buildingBlocks[KEY_atomStateMap].get(a)!
+    const getMounted = (a: Atom<unknown>) =>
+      buildingBlocks[KEY_mountedMap].get(a)
+    return { store, storeHooks, buildingBlocks, getAtomState, getMounted }
+  }
+
+  it('reconciles when dependencies change during reentrant mounting', () => {
+    const { store, storeHooks, getMounted } = createStoreWithHooks()
+    const useB = atom(false)
+    const useC = atom(false)
+    const a = atom('a')
+    const b = atom('b')
+    const c = atom('c')
+    const derived = atom((get) =>
+      get(useB) ? (get(useC) ? get(c) : get(b)) : get(a),
+    )
+    storeHooks.m.add(b, () => store.set(useC, true))
+    store.sub(derived, () => {})
+    store.set(useB, true)
+    expect(store.get(derived)).toBe('c')
+    expect(getMounted(b)).toBeUndefined()
+    store.set(c, 'c2')
+    expect(store.get(derived)).toBe('c2')
+    expect(new Set(getMounted(derived)!.d)).toEqual(new Set([useB, useC, c]))
+    expect(getMounted(a)).toBeUndefined()
+  })
+
+  it('avoids transient mounting during eager reads in a write', () => {
+    const storeHooks = INTERNAL_initializeStoreHooks({})
+    const store = INTERNAL_buildStore({ [KEY_storeHooks]: storeHooks })
+
+    const sel = atom(false)
+    const a = atom(0)
+    const b = atom(1)
+
+    const mount = vi.fn()
+    const unmount = vi.fn()
+    const onMount = vi.fn()
+
+    storeHooks.m.add(b, mount)
+    storeHooks.u.add(b, unmount)
+    b.onMount = () => {
+      onMount()
+    }
+
+    const derived = atom((get) => (get(sel) ? get(b) : get(a)))
+
+    const write = atom(null, (get, set) => {
+      set(sel, true)
+      expect(get(derived)).toBe(1)
+
+      set(sel, false)
+      expect(get(derived)).toBe(0)
+    })
+
+    const unsubscribe = store.sub(derived, () => {})
+    store.set(write)
+
+    // b is absent from the final dependency graph.
+    expect(mount).not.toHaveBeenCalled()
+    expect(unmount).not.toHaveBeenCalled()
+    expect(onMount).not.toHaveBeenCalled()
+
+    unsubscribe()
   })
 })
 

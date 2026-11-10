@@ -87,6 +87,7 @@ type AtomStateMap = WeakMapLike<AnyAtom, AtomState>
 type MountedMap = WeakMapLike<AnyAtom, Mounted>
 type InvalidatedAtoms = WeakMapLike<AnyAtom, EpochNumber>
 type ChangedAtoms = SetLike<AnyAtom>
+type UnreconciledAtoms = SetLike<AnyAtom>
 type Callbacks = SetLike<() => void>
 
 type AtomRead = <Value>(
@@ -215,6 +216,7 @@ const KEY_invalidatedAtoms = 'i'
 const KEY_changedAtoms = 'c'
 const KEY_mountCallbacks = 'q'
 const KEY_unmountCallbacks = 'Q'
+const KEY_unreconciledAtoms = 'u'
 const KEY_storeHooks = 'h'
 // atom interceptors
 const KEY_atomRead = 'R'
@@ -252,6 +254,7 @@ type BuildingBlocks = {
   [KEY_changedAtoms]: ChangedAtoms
   [KEY_mountCallbacks]: Callbacks
   [KEY_unmountCallbacks]: Callbacks
+  [KEY_unreconciledAtoms]: UnreconciledAtoms
   [KEY_storeHooks]: StoreHooks
   // atom interceptors
   [KEY_atomRead]: AtomRead
@@ -289,6 +292,7 @@ export type {
   MountedMap as INTERNAL_MountedMap,
   InvalidatedAtoms as INTERNAL_InvalidatedAtoms,
   ChangedAtoms as INTERNAL_ChangedAtoms,
+  UnreconciledAtoms as INTERNAL_UnreconciledAtoms,
   Callbacks as INTERNAL_Callbacks,
   AtomRead as INTERNAL_AtomRead,
   AtomWrite as INTERNAL_AtomWrite,
@@ -542,14 +546,17 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (
   const changedAtoms = buildingBlocks[KEY_changedAtoms]
   const mountCallbacks = buildingBlocks[KEY_mountCallbacks]
   const unmountCallbacks = buildingBlocks[KEY_unmountCallbacks]
+  const unreconciledAtoms = buildingBlocks[KEY_unreconciledAtoms]
   const storeHooks = buildingBlocks[KEY_storeHooks]
   const recomputeInvalidatedAtoms =
     buildingBlocks[KEY_recomputeInvalidatedAtoms]
+  const mountDependencies = buildingBlocks[KEY_mountDependencies]
   if (
     !storeHooks.f &&
     !changedAtoms.size &&
     !mountCallbacks.size &&
-    !unmountCallbacks.size
+    !unmountCallbacks.size &&
+    !unreconciledAtoms.size
   ) {
     return
   }
@@ -562,6 +569,13 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (
     }
   }
   do {
+    if (unreconciledAtoms.size) {
+      for (const atom of unreconciledAtoms) {
+        mountDependencies(buildingBlocks, store, atom)
+      }
+      unreconciledAtoms.clear()
+      recomputeInvalidatedAtoms(buildingBlocks, store)
+    }
     if (storeHooks.f) {
       call(storeHooks.f)
     }
@@ -589,7 +603,12 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (
     if (changedAtoms.size) {
       recomputeInvalidatedAtoms(buildingBlocks, store)
     }
-  } while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size)
+  } while (
+    changedAtoms.size ||
+    unmountCallbacks.size ||
+    mountCallbacks.size ||
+    unreconciledAtoms.size
+  )
   if (errors.length) {
     if (typeof AggregateError === 'function') {
       throw new AggregateError(errors)
@@ -605,6 +624,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   const mountedMap = buildingBlocks[KEY_mountedMap]
   const invalidatedAtoms = buildingBlocks[KEY_invalidatedAtoms]
   const changedAtoms = buildingBlocks[KEY_changedAtoms]
+  const unreconciledAtoms = buildingBlocks[KEY_unreconciledAtoms]
   const ensureAtomState = buildingBlocks[KEY_ensureAtomState]
   const readAtomState = buildingBlocks[KEY_readAtomState]
   const mountDependencies = buildingBlocks[KEY_mountDependencies]
@@ -681,7 +701,9 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     if (hasChangedDeps) {
       invalidatedAtoms.set(a, aState.n)
       readAtomState(buildingBlocks, store, a)
-      mountDependencies(buildingBlocks, store, a)
+      if (unreconciledAtoms.delete(a)) {
+        mountDependencies(buildingBlocks, store, a)
+      }
     }
     invalidatedAtoms.delete(a)
   }
@@ -698,14 +720,12 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
   const mountedMap = buildingBlocks[KEY_mountedMap]
   const invalidatedAtoms = buildingBlocks[KEY_invalidatedAtoms]
   const changedAtoms = buildingBlocks[KEY_changedAtoms]
+  const unreconciledAtoms = buildingBlocks[KEY_unreconciledAtoms]
   const storeHooks = buildingBlocks[KEY_storeHooks]
   const atomRead = buildingBlocks[KEY_atomRead]
   const ensureAtomState = buildingBlocks[KEY_ensureAtomState]
   const flushCallbacks = buildingBlocks[KEY_flushCallbacks]
-  const recomputeInvalidatedAtoms =
-    buildingBlocks[KEY_recomputeInvalidatedAtoms]
   const readAtomState = buildingBlocks[KEY_readAtomState]
-  const mountDependencies = buildingBlocks[KEY_mountDependencies]
   const setAtomStateValueOrPromise =
     buildingBlocks[KEY_setAtomStateValueOrPromise]
   const registerAbortHandler = buildingBlocks[KEY_registerAbortHandler]
@@ -742,19 +762,22 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
   }
   // Compute a new state for this atom.
   let isSync = true
+  let isDepsChanged = false
   const prevDeps = new Set<AnyAtom>(atomState.d.keys())
   const pruneDependencies = () => {
     for (const a of prevDeps) {
-      atomState.d.delete(a)
+      if (atomState.d.delete(a)) {
+        isDepsChanged = true
+      }
     }
+    prevDeps.clear()
   }
-  const mountDependenciesIfAsync = () => {
-    if (mountedMap.has(atom)) {
+  const scheduleMountDependencies = () => {
+    if (isDepsChanged && mountedMap.has(atom)) {
+      isDepsChanged = false
+      unreconciledAtoms.add(atom)
       // If changedAtoms is already populated, an outer recompute cycle will handle it
-      const shouldRecompute = !changedAtoms.size
-      mountDependencies(buildingBlocks, store, atom)
-      if (shouldRecompute) {
-        recomputeInvalidatedAtoms(buildingBlocks, store)
+      if (!isSync && !changedAtoms.size) {
         flushCallbacks(buildingBlocks, store)
       }
     }
@@ -777,7 +800,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
     try {
       return returnAtomValue(aState)
     } finally {
-      prevDeps.delete(a)
+      if (!prevDeps.delete(a) && !atomState.d.has(a)) {
+        isDepsChanged = true
+      }
       atomState.d.set(a, aState.n)
       if (isPromiseLike(atomState.v)) {
         addPendingPromiseToDependency(atom, atomState.v, aState)
@@ -786,7 +811,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
         mountedMap.get(a)?.t.add(atom)
       }
       if (!isSync) {
-        mountDependenciesIfAsync()
+        scheduleMountDependencies()
       }
     }
   }
@@ -824,7 +849,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
       )
       const settle = () => {
         pruneDependencies()
-        mountDependenciesIfAsync()
+        scheduleMountDependencies()
       }
       valueOrPromise.then(settle, settle)
     } else {
@@ -843,6 +868,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
     atomState.m = storeEpochNumber
     return atomState
   } finally {
+    scheduleMountDependencies()
     isSync = false
     if (atomState.n !== prevEpochNumber && prevInvalidated) {
       invalidatedAtoms.set(atom, atomState.n)
@@ -1008,6 +1034,9 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (buildingBlocks, store, atom) => {
     mountedMap.set(atom, mounted)
     if (isActuallyWritableAtom(atom) && hasOnMount(atom)) {
       const processOnMount = () => {
+        if (mountedMap.get(atom) !== mounted) {
+          return
+        }
         let isSync = true
         const setAtom = (...args: unknown[]) => {
           try {
@@ -1227,6 +1256,7 @@ function buildStore(partialBuildingBlocks?: Partial<BuildingBlocks>): Store {
     [KEY_changedAtoms]: new Set(),
     [KEY_mountCallbacks]: new Set(),
     [KEY_unmountCallbacks]: new Set(),
+    [KEY_unreconciledAtoms]: new Set(),
     [KEY_storeHooks]: {},
     // atom interceptors
     [KEY_atomRead]: BUILDING_BLOCK_atomRead,
@@ -1284,6 +1314,7 @@ export {
   KEY_changedAtoms as INTERNAL_KEY_changedAtoms,
   KEY_mountCallbacks as INTERNAL_KEY_mountCallbacks,
   KEY_unmountCallbacks as INTERNAL_KEY_unmountCallbacks,
+  KEY_unreconciledAtoms as INTERNAL_KEY_unreconciledAtoms,
   KEY_storeHooks as INTERNAL_KEY_storeHooks,
   KEY_atomRead as INTERNAL_KEY_atomRead,
   KEY_atomWrite as INTERNAL_KEY_atomWrite,
