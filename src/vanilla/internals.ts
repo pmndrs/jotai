@@ -823,8 +823,6 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
         controller?.abort(),
       )
       const settle = () => {
-        // A newer read may have replaced this promise and set its own
-        // dependencies, which must not be pruned by this stale read.
         if (atomState.v === valueOrPromise) {
           pruneDependencies()
         }
