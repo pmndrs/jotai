@@ -624,8 +624,10 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   const mountedMap = buildingBlocks[KEY_mountedMap]
   const invalidatedAtoms = buildingBlocks[KEY_invalidatedAtoms]
   const changedAtoms = buildingBlocks[KEY_changedAtoms]
+  const unreconciledAtoms = buildingBlocks[KEY_unreconciledAtoms]
   const ensureAtomState = buildingBlocks[KEY_ensureAtomState]
   const readAtomState = buildingBlocks[KEY_readAtomState]
+  const mountDependencies = buildingBlocks[KEY_mountDependencies]
   if (!changedAtoms.size) {
     return
   }
@@ -699,6 +701,9 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     if (hasChangedDeps) {
       invalidatedAtoms.set(a, aState.n)
       readAtomState(buildingBlocks, store, a)
+      if (unreconciledAtoms.delete(a)) {
+        mountDependencies(buildingBlocks, store, a)
+      }
     }
     invalidatedAtoms.delete(a)
   }
@@ -757,14 +762,19 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
   }
   // Compute a new state for this atom.
   let isSync = true
+  let isDepsChanged = false
   const prevDeps = new Set<AnyAtom>(atomState.d.keys())
   const pruneDependencies = () => {
     for (const a of prevDeps) {
-      atomState.d.delete(a)
+      if (atomState.d.delete(a)) {
+        isDepsChanged = true
+      }
     }
+    prevDeps.clear()
   }
   const scheduleMountDependencies = () => {
-    if (mountedMap.has(atom)) {
+    if (isDepsChanged && mountedMap.has(atom)) {
+      isDepsChanged = false
       unreconciledAtoms.add(atom)
       // If changedAtoms is already populated, an outer recompute cycle will handle it
       if (!isSync && !changedAtoms.size) {
@@ -790,7 +800,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
     try {
       return returnAtomValue(aState)
     } finally {
-      prevDeps.delete(a)
+      if (!prevDeps.delete(a) && !atomState.d.has(a)) {
+        isDepsChanged = true
+      }
       atomState.d.set(a, aState.n)
       if (isPromiseLike(atomState.v)) {
         addPendingPromiseToDependency(atom, atomState.v, aState)
