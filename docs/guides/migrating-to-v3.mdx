@@ -7,7 +7,7 @@ nav: 8.0
 <div className="v3-migration">
 
 Jotai v3 focuses on modernizing the package.
-The public API is unchanged: `useAtom`, `useAtomValue` and `useSetAtom`
+The core React hooks, `useAtom`, `useAtomValue` and `useSetAtom`,
 keep the same signatures and the same behavior for the vast majority of use cases.
 If your app runs on Jotai v2 without deprecation warnings,
 it should run on v3 as is.
@@ -108,6 +108,29 @@ function loadable(anAtom) {
   })
 }
 ```
+
+### useReducerAtom
+
+The `useReducerAtom` hook has been removed from `jotai/utils` and `jotai/react/utils`.
+Define it in your project using the
+[`useReducerAtom` recipe](../recipes/use-reducer-atom.mdx).
+If you want to apply a reducer at the atom level, use
+[`atomWithReducer`](../utilities/reducer.mdx) instead.
+
+### freezeAtomCreator
+
+The `freezeAtomCreator` util has been removed from `jotai/utils` and `jotai/vanilla/utils`.
+Use `freezeAtom` when creating an atom:
+
+```js
+import { atom } from 'jotai'
+import { freezeAtom } from 'jotai/utils'
+
+const objAtom = freezeAtom(atom({ count: 0 }))
+```
+
+If you need an atom factory, define it in your project as shown in the
+[debugging guide](./debugging.mdx#freezeatomcreator).
 
 ### jotai/babel
 
