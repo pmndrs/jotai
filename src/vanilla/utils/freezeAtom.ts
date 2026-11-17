@@ -2,14 +2,21 @@ import type { Atom, WritableAtom } from '../../vanilla.js'
 
 const frozenAtoms = new WeakSet<Atom<unknown>>()
 
-const deepFreeze = <T>(value: T): T => {
-  if (typeof value !== 'object' || value === null) {
+const deepFreeze = <T>(value: T, seen = new WeakSet<object>()): T => {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    // typed arrays with elements can't be frozen
+    ArrayBuffer.isView(value) ||
+    seen.has(value)
+  ) {
     return value
   }
+  seen.add(value)
   Object.freeze(value)
   const propNames = Object.getOwnPropertyNames(value)
   for (const name of propNames) {
-    deepFreeze((value as never)[name])
+    deepFreeze((value as never)[name], seen)
   }
   return value
 }

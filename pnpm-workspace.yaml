@@ -6,6 +6,8 @@ minimumReleaseAgeExclude:
   - 'react'
   - 'react-dom'
   - 'scheduler'
+overrides:
+  undici: 8.11.2
 allowBuilds:
   esbuild: false
   unrs-resolver: false

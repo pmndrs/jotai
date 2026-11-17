@@ -425,3 +425,41 @@ it('batches sync writes', () => {
   expect(fetch).toBeCalledWith(1)
   expect(store.get(a)).toBe(1)
 })
+
+it('unmounts the last dependency when it is removed', () => {
+  const base = atom(1)
+  const onUnmount = vi.fn()
+  base.onMount = () => onUnmount
+  let useBase = true
+  const derived = atom((get) => (useBase ? get(base) : 0))
+  const store = createStore()
+  store.sub(derived, () => {})
+  useBase = false
+  store.set(base, 2)
+  expect(store.get(derived)).toBe(0)
+  expect(onUnmount).toHaveBeenCalledOnce()
+})
+
+it('keeps dependencies of a newer read when an older promise settles', async () => {
+  const store = createStore()
+  const countAtom = atom(0)
+  const useAsyncAtom = atom(false)
+  const asyncAtom = atom(async () => {
+    await sleep(100)
+    return 'async'
+  })
+  const derivedAtom = atom((get) =>
+    get(useAsyncAtom) ? get(asyncAtom) : get(countAtom),
+  )
+  store.sub(derivedAtom, () => {})
+  expect(store.get(derivedAtom)).toBe(0)
+
+  store.set(useAsyncAtom, true)
+  expect(store.get(derivedAtom)).toBeInstanceOf(Promise)
+  store.set(useAsyncAtom, false)
+  expect(store.get(derivedAtom)).toBe(0)
+
+  await vi.advanceTimersByTimeAsync(100)
+  store.set(countAtom, 1)
+  expect(store.get(derivedAtom)).toBe(1)
+})
