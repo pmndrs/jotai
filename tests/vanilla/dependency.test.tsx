@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import { sleep } from '../test-utils.js'
 
@@ -575,3 +575,66 @@ it('does not call onMount for a dependency unmounted by a listener before callba
   expect(onMount).not.toHaveBeenCalled()
   expect(onUnmount).not.toHaveBeenCalled()
 })
+
+describe.each(['get', 'store.get'] as const)(
+  'eager read in write with %s',
+  (reader) => {
+    it('keeps a dependent up to date', () => {
+      const base = atom(1)
+      const derived = atom((get) => get(atom((get) => get(base))))
+      const dependent = atom((get) => get(derived))
+      const store = createStore()
+      store.sub(derived, () => {})
+      store.sub(dependent, () => {})
+      const w = atom(null, (get, set) => {
+        const read = reader === 'get' ? get : store.get
+        set(base, 2)
+        read(derived)
+        set(base, 3)
+      })
+      store.set(w)
+      expect(store.get(derived)).toBe(3)
+      expect(store.get(dependent)).toBe(3)
+    })
+
+    it('propagates through a dependency that is dropped and added back', () => {
+      const a = atom(1)
+      const b = atom(1)
+      const sel = atom(true)
+      const inner = atom((get) => get(a) + get(b))
+      const outer = atom((get) => (get(sel) ? get(inner) : 0))
+      const store = createStore()
+      store.sub(outer, () => {})
+      const w = atom(null, (get, set) => {
+        const read = reader === 'get' ? get : store.get
+        set(a, 2)
+        set(sel, false)
+        read(outer)
+      })
+      store.set(w)
+      store.set(sel, true)
+      store.set(b, 5)
+      expect(store.get(outer)).toBe(7)
+    })
+
+    it('recomputes a newly mounted dependency that changes later', () => {
+      const base = atom(0)
+      const useMiddle = atom(false)
+      const source = atom((get) => get(base) + 1)
+      const middle = atom((get) => get(source) * 10)
+      const outer = atom((get) => (get(useMiddle) ? get(middle) : 0))
+      const store = createStore()
+      store.sub(source, () => {})
+      store.sub(outer, () => {})
+      const w = atom(null, (get, set) => {
+        const read = reader === 'get' ? get : store.get
+        set(base, 1)
+        set(useMiddle, true)
+        read(outer)
+        set(base, 2)
+      })
+      store.set(w)
+      expect(store.get(outer)).toBe(30)
+    })
+  },
+)

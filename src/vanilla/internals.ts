@@ -691,7 +691,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   for (let i = sortedReversedAtoms.length - 1; i >= 0; --i) {
     const a = sortedReversedAtoms[i]!
     const aState = sortedReversedStates[i]!
-    let hasChangedDeps = false
+    let hasChangedDeps = unreconciledAtoms.has(a)
     for (const dep of aState.d.keys()) {
       if (dep !== a && changedAtoms.has(dep)) {
         hasChangedDeps = true
