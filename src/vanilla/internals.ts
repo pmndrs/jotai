@@ -848,7 +848,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
         controller?.abort(),
       )
       const settle = () => {
-        pruneDependencies()
+        if (atomState.v === valueOrPromise) {
+          pruneDependencies()
+        }
         scheduleMountDependencies()
       }
       valueOrPromise.then(settle, settle)

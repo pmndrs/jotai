@@ -1,6 +1,6 @@
 # Todos with atomFamily [![Open in StackBlitz](https://img.shields.io/badge/Open%20in-StackBlitz-blue?style=flat-square&logo=stackblitz)](https://stackblitz.com/github/pmndrs/jotai/tree/main/examples/todos_with_atomFamily)
 
-> **⚠️ Note:** `atomFamily` from `jotai/utils` is deprecated and will be removed in v3. For new projects, please use the [`jotai-family`](https://github.com/jotaijs/jotai-family) package instead.
+This example uses `atomFamily` from [`jotai-family`](https://github.com/jotaijs/jotai-family), which replaces the `jotai/utils` export removed in v3.
 
 ## Description
 
