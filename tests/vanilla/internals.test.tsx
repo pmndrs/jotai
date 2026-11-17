@@ -490,6 +490,27 @@ describe('dependency revision', () => {
     expect(getMounted(a)).toBeUndefined()
   })
 
+  it('preserves dependencies across reentrant mounting', () => {
+    const select = atom(1)
+    const toggle = atom(0)
+    const useDirect = atom(1)
+    const source = atom(2)
+    const other = atom(3)
+    const inner = atom((get) => (get(select) ? get(toggle) : get(source)))
+    const parent = atom((get) => (get(useDirect) ? get(toggle) : get(inner)))
+    const observer = atom((get) => (get(toggle) ? get(other) : get(select)))
+    const storeHooks = INTERNAL_initializeStoreHooks({})
+    const store = INTERNAL_buildStore({ [KEY_storeHooks]: storeHooks })
+    storeHooks.m.add(source, () => store.set(toggle, 1))
+    store.sub(parent, () => {})
+    store.sub(observer, () => {})
+    store.set(select, 0)
+    store.set(useDirect, 0)
+    expect(store.get(parent)).toBe(2)
+    store.set(select, 1)
+    expect(store.get(parent)).toBe(1)
+  })
+
   it('avoids transient mounting during eager reads in a write', () => {
     const storeHooks = INTERNAL_initializeStoreHooks({})
     const store = INTERNAL_buildStore({ [KEY_storeHooks]: storeHooks })

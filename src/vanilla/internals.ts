@@ -701,8 +701,9 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     if (hasChangedDeps) {
       invalidatedAtoms.set(a, aState.n)
       readAtomState(buildingBlocks, store, a)
-      if (unreconciledAtoms.delete(a)) {
+      if (unreconciledAtoms.has(a)) {
         mountDependencies(buildingBlocks, store, a)
+        unreconciledAtoms.delete(a)
       }
     }
     invalidatedAtoms.delete(a)
