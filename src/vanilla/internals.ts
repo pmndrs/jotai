@@ -623,8 +623,6 @@ const BUILDING_BLOCK_reconcileDeps: ReconcileDeps = (buildingBlocks, store) => {
   const recomputeInvalidatedAtoms =
     buildingBlocks[KEY_recomputeInvalidatedAtoms]
   const mountDependencies = buildingBlocks[KEY_mountDependencies]
-  // Snapshot before clearing. A mount or unmount hook can read an atom and add
-  // it back while its dependencies are being mounted.
   while (unreconciledAtoms.size) {
     const atoms = [...unreconciledAtoms]
     unreconciledAtoms.clear()
@@ -1166,8 +1164,6 @@ const BUILDING_BLOCK_storeGet: StoreGet = (buildingBlocks, store, atom) => {
   const changedAtoms = buildingBlocks[KEY_changedAtoms]
   const readAtomState = buildingBlocks[KEY_readAtomState]
   const reconcileDeps = buildingBlocks[KEY_reconcileDeps]
-  // A write already in progress flushes when it finishes. A read that itself
-  // fills changedAtoms has no later flush, so reconcile it here.
   const inOuterWrite = changedAtoms.size > 0
   const atomState = readAtomState(buildingBlocks, store, atom)
   if (!inOuterWrite) {
