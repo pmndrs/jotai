@@ -727,6 +727,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
   const ensureAtomState = buildingBlocks[KEY_ensureAtomState]
   const flushCallbacks = buildingBlocks[KEY_flushCallbacks]
   const readAtomState = buildingBlocks[KEY_readAtomState]
+  const mountDependencies = buildingBlocks[KEY_mountDependencies]
   const setAtomStateValueOrPromise =
     buildingBlocks[KEY_setAtomStateValueOrPromise]
   const registerAbortHandler = buildingBlocks[KEY_registerAbortHandler]
@@ -777,9 +778,13 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
     if (isDepsChanged && mountedMap.has(atom)) {
       isDepsChanged = false
       unreconciledAtoms.add(atom)
-      // If changedAtoms is already populated, an outer recompute cycle will handle it
-      if (!isSync && !changedAtoms.size) {
-        flushCallbacks(buildingBlocks, store)
+      if (!isSync) {
+        if (changedAtoms.size) {
+          mountDependencies(buildingBlocks, store, atom)
+          unreconciledAtoms.delete(atom)
+        } else {
+          flushCallbacks(buildingBlocks, store)
+        }
       }
     }
   }
