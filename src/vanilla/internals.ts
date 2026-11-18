@@ -127,6 +127,10 @@ type RecomputeInvalidatedAtoms = (
   buildingBlocks: Readonly<BuildingBlocks>,
   store: Store,
 ) => void
+type ReconcileDeps = (
+  buildingBlocks: Readonly<BuildingBlocks>,
+  store: Store,
+) => void
 type ReadAtomState = <Value>(
   buildingBlocks: Readonly<BuildingBlocks>,
   store: Store,
@@ -227,6 +231,7 @@ const KEY_atomOnMount = 'M'
 const KEY_ensureAtomState = 'e'
 const KEY_flushCallbacks = 'f'
 const KEY_recomputeInvalidatedAtoms = 'C'
+const KEY_reconcileDeps = 'U'
 const KEY_readAtomState = 'r'
 const KEY_invalidateDependents = 'd'
 const KEY_writeAtomState = 'w'
@@ -265,6 +270,7 @@ type BuildingBlocks = {
   [KEY_ensureAtomState]: EnsureAtomState
   [KEY_flushCallbacks]: FlushCallbacks
   [KEY_recomputeInvalidatedAtoms]: RecomputeInvalidatedAtoms
+  [KEY_reconcileDeps]: ReconcileDeps
   [KEY_readAtomState]: ReadAtomState
   [KEY_invalidateDependents]: InvalidateDependents
   [KEY_writeAtomState]: WriteAtomState
@@ -301,6 +307,7 @@ export type {
   EnsureAtomState as INTERNAL_EnsureAtomState,
   FlushCallbacks as INTERNAL_FlushCallbacks,
   RecomputeInvalidatedAtoms as INTERNAL_RecomputeInvalidatedAtoms,
+  ReconcileDeps as INTERNAL_ReconcileDeps,
   ReadAtomState as INTERNAL_ReadAtomState,
   InvalidateDependents as INTERNAL_InvalidateDependents,
   WriteAtomState as INTERNAL_WriteAtomState,
@@ -550,7 +557,7 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (
   const storeHooks = buildingBlocks[KEY_storeHooks]
   const recomputeInvalidatedAtoms =
     buildingBlocks[KEY_recomputeInvalidatedAtoms]
-  const mountDependencies = buildingBlocks[KEY_mountDependencies]
+  const reconcileDeps = buildingBlocks[KEY_reconcileDeps]
   if (
     !storeHooks.f &&
     !changedAtoms.size &&
@@ -569,13 +576,7 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (
     }
   }
   do {
-    if (unreconciledAtoms.size) {
-      for (const atom of unreconciledAtoms) {
-        mountDependencies(buildingBlocks, store, atom)
-      }
-      unreconciledAtoms.clear()
-      recomputeInvalidatedAtoms(buildingBlocks, store)
-    }
+    reconcileDeps(buildingBlocks, store)
     if (storeHooks.f) {
       call(storeHooks.f)
     }
@@ -614,6 +615,23 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (
       throw new AggregateError(errors)
     }
     throw Object.assign(new Error(), { errors })
+  }
+}
+
+const BUILDING_BLOCK_reconcileDeps: ReconcileDeps = (buildingBlocks, store) => {
+  const unreconciledAtoms = buildingBlocks[KEY_unreconciledAtoms]
+  const recomputeInvalidatedAtoms =
+    buildingBlocks[KEY_recomputeInvalidatedAtoms]
+  const mountDependencies = buildingBlocks[KEY_mountDependencies]
+  // Snapshot before clearing. A mount or unmount hook can read an atom and add
+  // it back while its dependencies are being mounted.
+  while (unreconciledAtoms.size) {
+    const atoms = [...unreconciledAtoms]
+    unreconciledAtoms.clear()
+    for (const atom of atoms) {
+      mountDependencies(buildingBlocks, store, atom)
+    }
+    recomputeInvalidatedAtoms(buildingBlocks, store)
   }
 }
 
@@ -1145,8 +1163,17 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
 }
 
 const BUILDING_BLOCK_storeGet: StoreGet = (buildingBlocks, store, atom) => {
+  const changedAtoms = buildingBlocks[KEY_changedAtoms]
   const readAtomState = buildingBlocks[KEY_readAtomState]
-  return returnAtomValue(readAtomState(buildingBlocks, store, atom))
+  const reconcileDeps = buildingBlocks[KEY_reconcileDeps]
+  // A write already in progress flushes when it finishes. A read that itself
+  // fills changedAtoms has no later flush, so reconcile it here.
+  const inOuterWrite = changedAtoms.size > 0
+  const atomState = readAtomState(buildingBlocks, store, atom)
+  if (!inOuterWrite) {
+    reconcileDeps(buildingBlocks, store)
+  }
+  return returnAtomValue(atomState)
 }
 
 const BUILDING_BLOCK_storeSet: StoreSet = (
@@ -1160,6 +1187,7 @@ const BUILDING_BLOCK_storeSet: StoreSet = (
   const recomputeInvalidatedAtoms =
     buildingBlocks[KEY_recomputeInvalidatedAtoms]
   const writeAtomState = buildingBlocks[KEY_writeAtomState]
+  const reconcileDeps = buildingBlocks[KEY_reconcileDeps]
   const prevChangedAtomsSize = changedAtoms.size
   try {
     return writeAtomState(buildingBlocks, store, atom, args)
@@ -1167,6 +1195,8 @@ const BUILDING_BLOCK_storeSet: StoreSet = (
     if (changedAtoms.size !== prevChangedAtomsSize) {
       recomputeInvalidatedAtoms(buildingBlocks, store)
       flushCallbacks(buildingBlocks, store)
+    } else {
+      reconcileDeps(buildingBlocks, store)
     }
   }
 }
@@ -1270,6 +1300,7 @@ function buildStore(partialBuildingBlocks?: Partial<BuildingBlocks>): Store {
     [KEY_ensureAtomState]: BUILDING_BLOCK_ensureAtomState,
     [KEY_flushCallbacks]: BUILDING_BLOCK_flushCallbacks,
     [KEY_recomputeInvalidatedAtoms]: BUILDING_BLOCK_recomputeInvalidatedAtoms,
+    [KEY_reconcileDeps]: BUILDING_BLOCK_reconcileDeps,
     [KEY_readAtomState]: BUILDING_BLOCK_readAtomState,
     [KEY_invalidateDependents]: BUILDING_BLOCK_invalidateDependents,
     [KEY_writeAtomState]: BUILDING_BLOCK_writeAtomState,
@@ -1326,6 +1357,7 @@ export {
   KEY_ensureAtomState as INTERNAL_KEY_ensureAtomState,
   KEY_flushCallbacks as INTERNAL_KEY_flushCallbacks,
   KEY_recomputeInvalidatedAtoms as INTERNAL_KEY_recomputeInvalidatedAtoms,
+  KEY_reconcileDeps as INTERNAL_KEY_reconcileDeps,
   KEY_readAtomState as INTERNAL_KEY_readAtomState,
   KEY_invalidateDependents as INTERNAL_KEY_invalidateDependents,
   KEY_writeAtomState as INTERNAL_KEY_writeAtomState,
