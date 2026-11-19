@@ -727,7 +727,6 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
   const ensureAtomState = buildingBlocks[KEY_ensureAtomState]
   const flushCallbacks = buildingBlocks[KEY_flushCallbacks]
   const readAtomState = buildingBlocks[KEY_readAtomState]
-  const mountDependencies = buildingBlocks[KEY_mountDependencies]
   const setAtomStateValueOrPromise =
     buildingBlocks[KEY_setAtomStateValueOrPromise]
   const registerAbortHandler = buildingBlocks[KEY_registerAbortHandler]
@@ -778,13 +777,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (
     if (isDepsChanged && mountedMap.has(atom)) {
       isDepsChanged = false
       unreconciledAtoms.add(atom)
-      if (!isSync) {
-        if (changedAtoms.size) {
-          mountDependencies(buildingBlocks, store, atom)
-          unreconciledAtoms.delete(atom)
-        } else {
-          flushCallbacks(buildingBlocks, store)
-        }
+      // If changedAtoms is already populated, an outer recompute cycle will handle it
+      if (!isSync && !changedAtoms.size) {
+        flushCallbacks(buildingBlocks, store)
       }
     }
   }
@@ -1085,6 +1080,7 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (
   atom,
 ) => {
   const mountedMap = buildingBlocks[KEY_mountedMap]
+  const invalidatedAtoms = buildingBlocks[KEY_invalidatedAtoms]
   const unmountCallbacks = buildingBlocks[KEY_unmountCallbacks]
   const storeHooks = buildingBlocks[KEY_storeHooks]
   const ensureAtomState = buildingBlocks[KEY_ensureAtomState]
@@ -1109,9 +1105,14 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (
     mounted = undefined
     mountedMap.delete(atom)
     // unmount dependencies
+    let isPending = false
     for (const a of atomState.d.keys()) {
       const aMounted = unmountAtom(buildingBlocks, store, a)
       aMounted?.t.delete(atom)
+      isPending ||= ensureAtomState(buildingBlocks, store, a).p.has(atom)
+    }
+    if (!isPending) {
+      invalidatedAtoms.delete(atom)
     }
     storeHooks.u?.(atom)
     return undefined

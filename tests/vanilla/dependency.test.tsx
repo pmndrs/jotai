@@ -600,6 +600,24 @@ it('does not call onMount for a dependency unmounted by a listener before callba
   expect(onUnmount).not.toHaveBeenCalled()
 })
 
+it('keeps a dependent up to date after an unsubscribe inside a write', () => {
+  const base = atom(0)
+  const derived = atom((get) => get(base))
+  const outer = atom((get) => get(derived))
+  const store = createStore()
+  const unsub = store.sub(derived, () => {})
+  store.set(
+    atom(null, (_get, set) => {
+      set(base, 1)
+      unsub()
+    }),
+  )
+  store.set(base, 0)
+  store.sub(outer, () => {})
+  store.set(base, 5)
+  expect(store.get(outer)).toBe(5)
+})
+
 describe.each(['get', 'store.get'] as const)(
   'eager read in write with %s',
   (reader) => {
