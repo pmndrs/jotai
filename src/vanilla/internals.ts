@@ -1080,6 +1080,7 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (
   atom,
 ) => {
   const mountedMap = buildingBlocks[KEY_mountedMap]
+  const invalidatedAtoms = buildingBlocks[KEY_invalidatedAtoms]
   const unmountCallbacks = buildingBlocks[KEY_unmountCallbacks]
   const storeHooks = buildingBlocks[KEY_storeHooks]
   const ensureAtomState = buildingBlocks[KEY_ensureAtomState]
@@ -1104,9 +1105,14 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (
     mounted = undefined
     mountedMap.delete(atom)
     // unmount dependencies
+    let isPending = false
     for (const a of atomState.d.keys()) {
       const aMounted = unmountAtom(buildingBlocks, store, a)
       aMounted?.t.delete(atom)
+      isPending ||= ensureAtomState(buildingBlocks, store, a).p.has(atom)
+    }
+    if (!isPending) {
+      invalidatedAtoms.delete(atom)
     }
     storeHooks.u?.(atom)
     return undefined
