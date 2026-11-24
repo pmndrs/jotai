@@ -551,6 +551,37 @@ describe('dependency revision', () => {
 
     unsubscribe()
   })
+
+  it('tracks an async dependency after a top-level store.get recomputes a stale atom', async () => {
+    const store = createStore()
+    const base = atom(0)
+    const derived = atom((get) => get(base))
+    const dep = atom(0)
+    const asyncAtom = atom(async (get) => {
+      await Promise.resolve()
+      return get(dep)
+    })
+    store.sub(asyncAtom, () => {})
+    const unsubDerived = store.sub(derived, () => {})
+    store.set(
+      atom(null, (_get, set) => {
+        set(base, 1)
+        unsubDerived()
+      }),
+    )
+    expect(store.get(derived)).toBe(1)
+    await store.get(asyncAtom)
+    await new Promise((r) => setTimeout(r))
+
+    let value: Promise<number> | undefined
+    store.set(
+      atom(null, (get, set) => {
+        set(dep, 1)
+        value = get(asyncAtom)
+      }),
+    )
+    await expect(value).resolves.toBe(1)
+  })
 })
 
 function isBuildingBlocks(blocks: object | undefined) {
