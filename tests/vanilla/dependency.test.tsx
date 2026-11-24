@@ -618,6 +618,23 @@ it('keeps a dependent up to date after an unsubscribe inside a write', () => {
   expect(store.get(outer)).toBe(5)
 })
 
+it('does not notify a listener subscribed after a write that unsubscribed', () => {
+  const base = atom(0)
+  const derived = atom((get) => get(base))
+  const store = createStore()
+  const unsub = store.sub(derived, () => {})
+  const w = atom(null, (_get, set) => {
+    set(base, 1)
+    unsub()
+  })
+  store.set(w)
+  const listener = vi.fn()
+  store.sub(derived, listener)
+  expect(listener).not.toHaveBeenCalled()
+  store.set(base, 2)
+  expect(listener).toHaveBeenCalledOnce()
+})
+
 describe.each(['get', 'store.get'] as const)(
   'eager read in write with %s',
   (reader) => {
