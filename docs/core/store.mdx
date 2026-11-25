@@ -13,6 +13,9 @@ The store can be used to pass in `Provider`.
 The store has three methods: `get` for getting atom values,
 `set` for setting atom values, and `sub` for subscribing to atom changes.
 
+Using these methods in the write function of an atom is not recommended.
+It's unsupported and the behavior may change.
+
 ```jsx
 const myStore = createStore()
 

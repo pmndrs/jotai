@@ -62,6 +62,10 @@ Furthermore, it can't read unresolved async values in Jotai v1 API.
 `set` in the write function is to write atom value.
 It will invoke the write function of the target atom.
 
+Using store methods (`store.get`, `store.set` and `store.sub`) in the write function is not recommended.
+It's unsupported and the behavior may change.
+Use `get` and `set` instead.
+
 ### Note about creating an atom in render function
 
 Atom configs can be created anywhere, but referential equality is important.

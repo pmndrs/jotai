@@ -455,6 +455,71 @@ describe('store hooks', () => {
       expect(flushCallback).toHaveBeenCalledTimes(1)
     })
   })
+
+  it('recomputes a dependent when a mount hook writes during a write', () => {
+    const { store, storeHooks } = createStoreWithHooks()
+    const flag = atom(true)
+    const inner = atom((get) => get(flag))
+    const outer = atom((get) => (get(flag) ? -1 : get(inner)))
+    storeHooks.m.add(inner, () => store.set(flag, true))
+    store.sub(outer, () => {})
+    store.set(flag, false)
+    expect(store.get(outer)).toBe(-1)
+  })
+
+  it('tracks a dependency restored by an unmount hook write', () => {
+    const { store, storeHooks } = createStoreWithHooks()
+    const sel = atom(false)
+    const a = atom(0)
+    const b = atom(1)
+    const derived = atom((get) => (get(sel) ? get(b) : get(a)))
+    storeHooks.u.add(a, () => store.set(sel, false))
+    const listener = vi.fn()
+    store.sub(derived, listener)
+    store.set(sel, true)
+    listener.mockClear()
+    store.set(a, 5)
+    expect(store.get(derived)).toBe(5)
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
+  it('tracks a dependency restored by a change hook write', () => {
+    const { store, storeHooks } = createStoreWithHooks()
+    const sel = atom(false)
+    const a = atom(0)
+    const b = atom(1)
+    const derived = atom((get) => (get(sel) ? get(b) : get(a)))
+    storeHooks.c.add(derived, () => store.set(sel, false))
+    const listener = vi.fn()
+    store.sub(derived, listener)
+    store.set(sel, true)
+    listener.mockClear()
+    store.set(a, 5)
+    expect(store.get(derived)).toBe(5)
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
+  // Using `store` in a write function is unsupported and may change.
+  // This test only checks internal behavior.
+  it('avoids transient mounting with a nested no-op store.set in a write', () => {
+    const { store, storeHooks } = createStoreWithHooks()
+    const sel = atom(false)
+    const a = atom(0)
+    const b = atom(1)
+    const derived = atom((get) => (get(sel) ? get(b) : get(a)))
+    const mount = vi.fn()
+    storeHooks.m.add(b, mount)
+    const noop = atom(null, () => {})
+    const write = atom(null, (get, set) => {
+      set(sel, true)
+      get(derived)
+      store.set(noop)
+      set(sel, false)
+    })
+    store.sub(derived, () => {})
+    store.set(write)
+    expect(mount).not.toHaveBeenCalled()
+  })
 })
 
 describe('dependency revision', () => {

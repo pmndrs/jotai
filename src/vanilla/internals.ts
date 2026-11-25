@@ -1161,16 +1161,16 @@ const BUILDING_BLOCK_storeSet: StoreSet = (
   atom,
   ...args
 ) => {
-  const changedAtoms = buildingBlocks[KEY_changedAtoms]
   const flushCallbacks = buildingBlocks[KEY_flushCallbacks]
   const recomputeInvalidatedAtoms =
     buildingBlocks[KEY_recomputeInvalidatedAtoms]
   const writeAtomState = buildingBlocks[KEY_writeAtomState]
-  const prevChangedAtomsSize = changedAtoms.size
+  const storeEpochHolder = buildingBlocks[KEY_storeEpochHolder]
+  const prevStoreEpochNumber = storeEpochHolder[0]
   try {
     return writeAtomState(buildingBlocks, store, atom, args)
   } finally {
-    if (changedAtoms.size !== prevChangedAtomsSize) {
+    if (storeEpochHolder[0] !== prevStoreEpochNumber) {
       recomputeInvalidatedAtoms(buildingBlocks, store)
       flushCallbacks(buildingBlocks, store)
     }
