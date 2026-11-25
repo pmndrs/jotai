@@ -1492,6 +1492,8 @@ it('notifies async derived-atom subscriber when read calls store.set before awai
   expect(await lastValue).toBe(4)
 })
 
+// Using `store` in a write function is unsupported and may change.
+// This test only checks internal behavior.
 it('notifies subscriber normally when store.set is in write function, not read', () => {
   const store = createStore()
   const counterAtom = atom(0)
@@ -1614,6 +1616,8 @@ it('does not recompute derived atom redundantly when store.set in read uses retu
   expect(derivedReadCount).toBe(1)
 })
 
+// Using `store` in a write function is unsupported and may change.
+// This test only checks internal behavior.
 it('notifies subscriber when a nested no-op store.set and a subscription happen inside the outer write (#3353)', () => {
   const store = createStore()
   const a = atom(0)
