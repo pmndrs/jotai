@@ -615,6 +615,8 @@ describe('dependency revision', () => {
     unsubscribe()
   })
 
+  // Using `store` in a write function is unsupported and may change.
+  // This test only checks internal behavior.
   it('tracks an async dependency after a top-level store.get recomputes a stale atom', async () => {
     const store = createStore()
     const base = atom(0)
