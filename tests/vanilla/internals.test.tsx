@@ -39,6 +39,7 @@ import {
   INTERNAL_KEY_storeSub as KEY_storeSub,
   INTERNAL_KEY_unmountAtom as KEY_unmountAtom,
   INTERNAL_KEY_unmountCallbacks as KEY_unmountCallbacks,
+  INTERNAL_KEY_unreconciledAtoms as KEY_unreconciledAtoms,
   INTERNAL_KEY_writeAtomState as KEY_writeAtomState,
 } from 'jotai/vanilla/internals'
 
@@ -49,6 +50,7 @@ const buildingBlockKeys: (keyof INTERNAL_BuildingBlocks)[] = [
   KEY_changedAtoms,
   KEY_mountCallbacks,
   KEY_unmountCallbacks,
+  KEY_unreconciledAtoms,
   KEY_storeHooks,
   KEY_atomRead,
   KEY_atomWrite,
@@ -517,6 +519,133 @@ describe('store hooks', () => {
     store.sub(derived, () => {})
     store.set(write)
     expect(mount).not.toHaveBeenCalled()
+  })
+})
+
+describe('dependency revision', () => {
+  const createStoreWithHooks = () => {
+    const storeHooks = INTERNAL_initializeStoreHooks({})
+    const store = INTERNAL_buildStore({ [KEY_storeHooks]: storeHooks })
+    const buildingBlocks = INTERNAL_getBuildingBlocks(store)
+    const getAtomState = (a: Atom<unknown>) =>
+      buildingBlocks[KEY_atomStateMap].get(a)!
+    const getMounted = (a: Atom<unknown>) =>
+      buildingBlocks[KEY_mountedMap].get(a)
+    return { store, storeHooks, buildingBlocks, getAtomState, getMounted }
+  }
+
+  it('reconciles when dependencies change during reentrant mounting', () => {
+    const { store, storeHooks, getMounted } = createStoreWithHooks()
+    const useB = atom(false)
+    const useC = atom(false)
+    const a = atom('a')
+    const b = atom('b')
+    const c = atom('c')
+    const derived = atom((get) =>
+      get(useB) ? (get(useC) ? get(c) : get(b)) : get(a),
+    )
+    storeHooks.m.add(b, () => store.set(useC, true))
+    store.sub(derived, () => {})
+    store.set(useB, true)
+    expect(store.get(derived)).toBe('c')
+    expect(getMounted(b)).toBeUndefined()
+    store.set(c, 'c2')
+    expect(store.get(derived)).toBe('c2')
+    expect(new Set(getMounted(derived)!.d)).toEqual(new Set([useB, useC, c]))
+    expect(getMounted(a)).toBeUndefined()
+  })
+
+  it('preserves dependencies across reentrant mounting', () => {
+    const select = atom(1)
+    const toggle = atom(0)
+    const useDirect = atom(1)
+    const source = atom(2)
+    const other = atom(3)
+    const inner = atom((get) => (get(select) ? get(toggle) : get(source)))
+    const parent = atom((get) => (get(useDirect) ? get(toggle) : get(inner)))
+    const observer = atom((get) => (get(toggle) ? get(other) : get(select)))
+    const storeHooks = INTERNAL_initializeStoreHooks({})
+    const store = INTERNAL_buildStore({ [KEY_storeHooks]: storeHooks })
+    storeHooks.m.add(source, () => store.set(toggle, 1))
+    store.sub(parent, () => {})
+    store.sub(observer, () => {})
+    store.set(select, 0)
+    store.set(useDirect, 0)
+    expect(store.get(parent)).toBe(2)
+    store.set(select, 1)
+    expect(store.get(parent)).toBe(1)
+  })
+
+  it('avoids transient mounting during eager reads in a write', () => {
+    const storeHooks = INTERNAL_initializeStoreHooks({})
+    const store = INTERNAL_buildStore({ [KEY_storeHooks]: storeHooks })
+
+    const sel = atom(false)
+    const a = atom(0)
+    const b = atom(1)
+
+    const mount = vi.fn()
+    const unmount = vi.fn()
+    const onMount = vi.fn()
+
+    storeHooks.m.add(b, mount)
+    storeHooks.u.add(b, unmount)
+    b.onMount = () => {
+      onMount()
+    }
+
+    const derived = atom((get) => (get(sel) ? get(b) : get(a)))
+
+    const write = atom(null, (get, set) => {
+      set(sel, true)
+      expect(get(derived)).toBe(1)
+
+      set(sel, false)
+      expect(get(derived)).toBe(0)
+    })
+
+    const unsubscribe = store.sub(derived, () => {})
+    store.set(write)
+
+    // b is absent from the final dependency graph.
+    expect(mount).not.toHaveBeenCalled()
+    expect(unmount).not.toHaveBeenCalled()
+    expect(onMount).not.toHaveBeenCalled()
+
+    unsubscribe()
+  })
+
+  // Using `store` in a write function is unsupported and may change.
+  // This test only checks internal behavior.
+  it('tracks an async dependency after a top-level store.get recomputes a stale atom', async () => {
+    const store = createStore()
+    const base = atom(0)
+    const derived = atom((get) => get(base))
+    const dep = atom(0)
+    const asyncAtom = atom(async (get) => {
+      await Promise.resolve()
+      return get(dep)
+    })
+    store.sub(asyncAtom, () => {})
+    const unsubDerived = store.sub(derived, () => {})
+    store.set(
+      atom(null, (_get, set) => {
+        set(base, 1)
+        unsubDerived()
+      }),
+    )
+    expect(store.get(derived)).toBe(1)
+    await store.get(asyncAtom)
+    await new Promise((r) => setTimeout(r))
+
+    let value: Promise<number> | undefined
+    store.set(
+      atom(null, (get, set) => {
+        set(dep, 1)
+        value = get(asyncAtom)
+      }),
+    )
+    await expect(value).resolves.toBe(1)
   })
 })
 
