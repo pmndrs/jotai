@@ -600,6 +600,8 @@ it('does not call onMount for a dependency unmounted by a listener before callba
   expect(onUnmount).not.toHaveBeenCalled()
 })
 
+// Using `store` in a write function is unsupported and may change.
+// This test only checks internal behavior.
 it('keeps a dependent up to date after an unsubscribe inside a write', () => {
   const base = atom(0)
   const derived = atom((get) => get(base))
@@ -618,6 +620,8 @@ it('keeps a dependent up to date after an unsubscribe inside a write', () => {
   expect(store.get(outer)).toBe(5)
 })
 
+// Using `store` in a write function is unsupported and may change.
+// This test only checks internal behavior.
 it('does not notify a listener subscribed after a write that unsubscribed', () => {
   const base = atom(0)
   const derived = atom((get) => get(base))
@@ -635,6 +639,8 @@ it('does not notify a listener subscribed after a write that unsubscribed', () =
   expect(listener).toHaveBeenCalledOnce()
 })
 
+// Using `store` in a write function is unsupported and may change.
+// The `store.get` cases only check internal behavior.
 describe.each(['get', 'store.get'] as const)(
   'eager read in write with %s',
   (reader) => {
